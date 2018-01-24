@@ -9,24 +9,25 @@ Dotenv.load
 # :development environment.
 ENVIRONMENT = (ENV['RUBY_ENV'] || ENV['RACK_ENV'] || :development).to_sym
 
-# require any initializers
-if File.exists?(ENV['BUNDLE_GEMFILE'])
-  require 'bundler'
-  Bundler.require(:default, ENV['RACK_ENV'] || :development)
-  Dir[File.dirname(__FILE__) + '/lib/initializers/*.rb'].each do |file|
-    require file
-  end
-end
-
 # Require gems we care about
 require 'uri'
 require 'pathname'
 require 'logger'
 require 'erb'
+if File.exists?(ENV['BUNDLE_GEMFILE'])
+  require 'bundler'
+  Bundler.require(:default, ENV['RACK_ENV'] || :development)
+end
 
 # Some helper constants for path-centric logic
 APP_ROOT = Pathname.new(File.expand_path('../../', __FILE__))
 APP_NAME = APP_ROOT.basename.to_s
+
+# require any initializers
+Dir[APP_ROOT.join('lib', 'initializers', '*.rb')].each do |file|
+  require file
+end
+
 
 # require libraries we use everywhere
 
