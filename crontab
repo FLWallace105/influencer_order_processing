@@ -10,3 +10,4 @@ PROJECT_PATH=/var/influencer_order_processing
 #
 
 */20 * * * * root docker-compose -f $PROJECT_PATH/docker-compose.yml run --rm worker rake pull:all
+*/20 * * * * root docker-compose -f $PROJECT_PATH/docker-compose.yml run --rm worker rake poll_order_tracking
