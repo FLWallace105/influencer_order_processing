@@ -1,7 +1,8 @@
 require_relative '../../lib/process_users'
-require_relative '../../lib/create_csv'
+#require_relative '../../lib/create_csv'
 require_relative '../../lib/ftp'
 require 'sinatra/basic_auth'
+require_relative '../middleware/session_notifications'
 
 $apikey = ENV['SHOPIFY_API_KEY']
 $password = ENV['SHOPIFY_PASSWORD']
@@ -11,6 +12,7 @@ $secret = ENV['SHOPIFY_SHARED_SECRET']
 #ShopifyAPI::Base.site = "https://#{$apikey}:#{$password}@#{$shopname}.myshopify.com/admin"
 #ShopifyAPI::Session.setup(api_key: $apikey, secret: $secret)
 
+class DebugError < StandardError; end
 
 class App < Sinatra::Base
   register Sinatra::ActiveRecordExtension
@@ -26,8 +28,9 @@ class App < Sinatra::Base
     enable :sessions
     set :session_secret, ENV['session_secret'] || 'this is a secret shhhhh'
 
-    # set the views to
+    # set the views directory to /app/views
     set :views, File.join(App.root, "app", "views")
+    use SessionNotificationsMiddleware
   end
 
   authorize "Admin" do |username, password|
@@ -37,37 +40,69 @@ class App < Sinatra::Base
   protect "Admin" do
 
     get '/' do
+      notifications << Notification.new('test message', type: :warning, header: 'Hello World')
       erb :'index'
     end
 
-    get '/admin' do
-      redirect '/admin/uploads/new'
-    end
-
+    # form to upload a csv containing influencer informatiion
     get '/admin/uploads/new' do
       erb :'uploads/new'
     end
 
+    # form target for influencer order csv
     post '/admin/uploads' do
-      filename = '/tmp/invalid.txt'
-      File.truncate(filename,0)
       influencer_data = params[:file][:tempfile].read
       utf_data = influencer_data.force_encoding('iso8859-1').encode('utf-8')
-      influencer_rows = CSV.parse(utf_data, headers: true, header_converters: :symbol)
+      rows = CSV.parse(utf_data, headers: true, header_converters: :symbol)
+      influencers = rows.map{|row| Influencer.from_csv_row(row).save}
+      notifications += influencers.flat_map do |i|
+        next [] if i.valid?
+        message = i.full_messages.join("\n")
+        [Notification.new(message, header: "#{i.name} has errors", type: 'error')]
+      end
 
-      if !check_email(influencer_rows)
+      unless notifications.empty?
         status 422
-        return erb :'uploads/new', locals: { errors: ["Oops! Some of the records you submitted are incorrect."] }
-      else
-        influencer_rows.each do |user|
-          if !create_user(user)
-            File.open(filename,'a+') do |file|
-              file.write(user)
-            end
-            return erb :'uploads/new', locals: { errors: ["Oops! Some of the records you submitted are incorrect."] }
-          end
+        return erb :'uploads/new'
+      end
+
+      erb :'orders/new'
+    end
+
+    get '/admin/influencers' do
+      influencer_params = model_params Influencer
+      @influencers = if influencer_params.empty?
+                       Influencer.all.order(:last_name) 
+                     else
+                       Influencer.where(influencer_params).order(:last_name)
+                     end
+      erb :'influencers/index'
+    end
+
+    get '/admin/influencers/new' do
+      @title = 'Add New Influencer'
+      @method = 'post'
+      @influencer = Influencer.new
+      erb :'influencers/form'
+    end
+
+    post '/admin/influencers' do
+      case params[:action]
+      when 'create_orders'
+        #raise DebugError
+        influencers = Influencer.where(id: params[:ids])
+        collection_id = params[:collection_id]
+        influencers.each do |influencer|
+          influencer.create_orders_from_collection collection_id
         end
-        erb :'orders/new'
+        msg = "Successfully created orders for #{influencers.count} influencers!"
+        notifications << Notification.new(msg, type: 'success')
+        redirect '/'
+      when 'delete'
+        raise DebugError
+      else
+        notifications << Notification.new('Unknown action.', type: 'error')
+        redirect '/'
       end
     end
 
@@ -81,6 +116,14 @@ class App < Sinatra::Base
       redirect '/'
     end
 
+    get '/admin/influencers/:id' do |id|
+      @title = 'Edit Influencer'
+      @method = 'put'
+      @influencer = Influencer.find id
+      erb :'influencers/form'
+    end
+
+    # download a csv with influencer information, matches upload format
     get '/admin/influencers/download' do
       file_to_download = Influencer.to_csv
       send_file(file_to_download, :filename => file_to_download)
@@ -88,9 +131,21 @@ class App < Sinatra::Base
 
     # orders
 
+    # used to generate new orders for existing influencers
+    post '/admin/influencers/orders' do
+      raise DebugError
+      return 400 unless params[:collection_id]
+      collection = CustomCollection.find params[:collection_id]
+      ids = params[id] || []
+      influencers = ids.empty? ? Influencer.all : Influencer.where(id: ids)
+      influencers.each do |influencer|
+        influencer.create_orders_from_collection
+      end
+    end
 
     get '/admin/orders' do
-      orders = InfluencerOrder.where(params).order(uploaded_at: :asc)
+      order_params = model_params InfluencerOrder
+      orders = order_params.empty? ? InfluencerOrder.all.order(:uploaded_at) : InfluencerOrder.where(order_params).order(:uploaded_at)
       @table = orders.group_by(&:name).map do |k, line_items|
         fline = line_items.first
         # set default blank objects if the associated influencer or tracking are
@@ -124,13 +179,7 @@ class App < Sinatra::Base
       erb :'orders/new'
     end
 
-    post '/admin/orders' do
-      order_params = params[:order]
-      placeholder_3item_id = order_params['collection_3_id']
-      placeholder_5item_id = order_params['collection_5_id']
-      orders = Influencer.generate_orders(placeholder_3item_id, placeholder_5item_id)
-
-      puts "Total orders: #{orders.length}"
+    post '/admin/orders/upload' do
       csv_file = InfluencerOrder.create_csv orders
       # todo: orders should really not be marked uploaded until the upload succeeds.
       # This should be retooled in the future
@@ -144,8 +193,11 @@ class App < Sinatra::Base
       erb :'orders/show'
     end
 
+    post '/admin/orders' do
+      raise DebugError
+    end
 
-    get '/admin/orders/show_unprocessed' do
+    get '/admin/orders/download_unprocessed' do
       orders = InfluencerOrder.where(:processed_at => nil)
       file = create_output_csv(orders)
       send_file(file, :filename => "TEST_unprocessed_#{Time.current.strftime("%Y_%m_%d_%H_%M_%S")}.csv")
@@ -198,5 +250,49 @@ class App < Sinatra::Base
         404
       end
     end
+
+    get '/debug' do
+      raise DebugError
+    end
+
+    options '/' do
+      raise DebugError
+    end
+
+    post '/dump' do
+      raise DebugError
+    end
+
+    patch '/dump' do
+      raise DebugError
+    end
+
+    delete '/dump' do
+      raise DebugError
+    end
   end
+  
+  private
+
+  def model_params(model)
+    model.column_names.map{|col| params.assoc col}.reject(&:nil?).to_h
+  end
+
+  def notifications
+    puts 'calling notifications get'
+    session[:notifications] || []
+  end
+
+  def notifications=(other)
+    puts "calling notification set with #{other.inspect}"
+    session[:notifications] = other
+  end
+
+  def render_and_clear_notifications
+    puts 'rendering and clearing notifications'
+    output = session[:notifications]
+    session[:notifications] = []
+    output
+  end
+
 end

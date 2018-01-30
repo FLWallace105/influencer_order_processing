@@ -1,0 +1,66 @@
+<style>
+  tr:has(td > input:checked) {
+    color: #fff;
+    background-color: #00d1b2;
+  }
+  table.influencers-table {
+    width: 100%;
+    overflow: scroll;
+  }
+</style>
+<form method="post" accept-charset="utf-8">
+  <a href="influencers/new" class="button is-link is-primary">New</a>
+  <div class="field is-pulled-right has-addons">
+    <p class="control"><button class="button is-danger">Delete</button></p>
+  </div>
+  <div class="field is-pulled-right has-addons">
+    <p class="control">
+      <input class="input" type="text" name="collection_id" value="">
+    </p>
+    <p class="control">
+      <button class="button" name="action" value="create_orders">Create Orders</button>
+    </p>
+  </div>
+  <table class="table is-hoverable influencers-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Address Line 1</th>
+        <th>Address Line 2</th>
+        <th>City</th>
+        <th>State</th>
+        <th>Zip</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Bra Size</th>
+        <th>Top Size</th>
+        <th>Leggings Size</th>
+        <th>Jacket Size</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @influencers.each do |influencer| %>
+        <tr>
+          <td><input type="checkbox" name="ids[]" value="<%= influencer.id %>" id="ids[]"></td>
+          <td><%= influencer.id %></td>
+          <td><%= influencer.first_name %></td>
+          <td><%= influencer.last_name %></td>
+          <td><%= influencer.address1 %></td>
+          <td><%= influencer.address2 %></td>
+          <td><%= influencer.city %></td>
+          <td><%= influencer.state %></td>
+          <td><%= influencer.zip %></td>
+          <td><%= influencer.email %></td>
+          <td><%= influencer.phone %></td>
+          <td><%= influencer.bra_size %></td>
+          <td><%= influencer.top_size %></td>
+          <td><%= influencer.bottom_size %></td>
+          <td><%= influencer.sports_jacket_size %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</form>

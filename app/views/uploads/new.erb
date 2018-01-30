@@ -1,15 +1,5 @@
 <h3><strong>Upload Influencers CSV</strong></h3>
 <br />
-<% if defined? errors %>
-  <div class="notification is-danger error-upload" style="width:200px;">
-    <% errors.each do |msg| %>
-      <p class="errors"> <%= msg %> </p>
-    <% end %>
-    <form action="/admin/download" method="get">
-      <input type="submit" value="Download Error Report" />
-    </form>
-  </div>
-<% end %>
 
 <form id="upload-form" action="/admin/uploads" enctype="multipart/form-data" method="post">
   <div class = "field">

@@ -15,7 +15,16 @@
  <!-- <link rel="stylesheet" href="/css/application.css"> -->
 
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <title></title>
+  <title><%= @title || 'Create Your Monthly Order' %></title>
+  <script charset="utf-8">
+    "use strict";
+    const removeParent = (event) => {
+      console.log(event);
+      const target = event.currentTarget || event.target;
+      target.parentNode.remove()
+      return false;
+    };
+  </script>
 </head>
 <body>
   <section class="hero is-dark">
@@ -30,8 +39,19 @@
       </div>
     </div>
   </section>
-  <section>
+  <section class="main">
     <div class="container">
+      <div class="notifications">
+        <% render_and_clear_notifications.each do |n| %>
+          <div class="notification is-<%= n.type %>">
+            <button class="delete" onclick="removeParent(event)"></button>
+            <% if n.header %>
+              <h5 class="title"><%= n.header %></h2>
+            <% end %>
+            <%= simple_format n.message %>
+          </div>
+        <% end %>
+      </div>
       <%= yield %>
     </div>
   </section>

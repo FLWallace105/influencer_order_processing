@@ -36,7 +36,7 @@ def autoload_path(path)
   Dir[path].each do |file|
     filename = File.basename(file).gsub('.rb', '')
     class_name = ActiveSupport::Inflector.camelize(filename)
-    puts "lazy loading #{class_name} in #{file}"
+    #puts "lazy loading #{class_name} in #{file}"
     autoload class_name, file
   end
 end

@@ -5,60 +5,45 @@ class InfluencerOrder < ActiveRecord::Base
   CSV_DATE_FMT = '%m/%d/%Y %H:%M'
   CSV_HEADERS = ["order_number","groupon_number","order_date","merchant_sku_item","quantity_requested","shipment_method_requested","shipment_address_name","shipment_address_street","shipment_address_street_2","shipment_address_city","shipment_address_state","shipment_address_postal_code","shipment_address_country","gift","gift_message","quantity_shipped","shipment_carrier","shipment_method","shipment_tracking_number","ship_date","groupon_sku","custom_field_value","permalink","item_name","vendor_id","salesforce_deal_option_id","groupon_cost","billing_address_name","billing_address_street","billing_address_city","billing_address_state","billing_address_postal_code","billing_address_country","purchase_order_number","product_weight","product_weight_unit","product_length","product_width","product_height","product_dimension_unit","customer_phone","incoterms","hts_code","3pl_name","3pl_warehouse_location","kitting_details","sell_price","deal_opportunity_id","shipment_strategy","fulfillment_method","country_of_origin","merchant_permalink","feature_start_date","feature_end_date","bom_sku","payment_method","color_code","tax_rate","tax_price"]
 
-  def uploaded?
-    !uploaded_at.nil?
+  validates :name, presence: true, format: /\A#IN\z/
+  validates :billing_address, presence: true
+  validates :shipping_address, presence: true
+  validates :line_item, presence: true
+  validates :influencer_id, presence: true
+
+  def self.generate_order_number
+    "#IN" + SecureRandom.random_number(36**12).to_s(36).rjust(11,"0")
   end
 
-  def self.items_from_collection_id(collection_id)
-    order_items = []
-    local_collects = Collect.where(collection_id: collection_id)
-    local_collects.each do |coll|
-      line_item = Product.find(coll.product_id)
-      order_items.push(map_multiple_products(MULTIPLE_PRODUCT_DATA,SIZE_SKU_DATA,line_item))
-    end
-    order_items
+  def self.name_csv
+    "Orders_#{Time.current.strftime("%Y_%m_%d_%H_%M_%S_%L")}.csv"
   end
 
-  def self.address(user)
+
+  def self.create_from_influencer_variant(influencer, variant, options = {})
+    # shipping lines blank most of the time
+    shipping_lines = options[:shipping_lines]
+    order_number = options[:order_number] || options[:name] || generate_order_number
+    create(
+      name: order_number,
+      processed_at: Time.current,
+      billing_address: influencer.billing_address,
+      shipping_address: influencer.shipping_address,
+      shipping_lines: shipping_lines,
+      line_item: [variant_line_item(variant)],
+      influencer_id: influencer.id,
+    )
+  end
+
+  def self.variant_line_item(variant, quantity = 1)
     {
-      'address1' => user.address1,
-      'address2' => user.address2,
-      'city' => user.city,
-      'zip' => user.zip,
-      'province_code' => user.state,
-      'country_code' => 'US',
-      'phone' => user.phone
-    }
-  end
-
-  def self.shipping_address(user)
-    shipping_address = InfluencerOrder::address(user)
-    shipping_address['first_name'] = user['first_name']
-    shipping_address['last_name'] = user['last_name']
-    shipping_address
-  end
-
-  def self.billing_address(user)
-    billing_address = InfluencerOrder::address(user)
-    billing_address['name'] = "#{user['first_name']} #{user['last_name']}"
-    billing_address
-  end
-
-  def self.get_corresponding_variant(user_item_size,prod)
-    prod[0]['variants'].each do |var|
-      return var if user_item_size == var['title']
-    end
-  end
-
-  def self.add_item_variant(prod,var)
-    {
-      'product_id' => prod[0]['options'][0]['product_id'],
-      'merchant_sku_item' => var['sku'],
-      'size' => var['title'],
-      'quantity_requested' => prod[0]['quantity'],
-      'item_name' => prod[0]['title'],
-      'sell_price' => var['price'],
-      'product_weight' => var['weight']
+      'product_id' => variant.product_id,
+      'merchant_sku_item' => variant.sku,
+      'size' => variant.option1,
+      'quantity_requested' => quantity,
+      'item_name' => variant.product.title,
+      'sell_price' => variant.price,
+      'product_weight' => variant.weight,
     }
   end
 
@@ -102,13 +87,21 @@ class InfluencerOrder < ActiveRecord::Base
     }
   end
 
-  private
-
-  def self.name_csv
-    "Orders_#{Time.current.strftime("%Y_%m_%d_%H_%M_%S_%L")}.csv"
+  def address
+    self.class.address influencer
   end
 
-  def self.generate_order_number
-    "#IN" + SecureRandom.random_number(36**12).to_s(36).rjust(11,"0")
+  def uploaded?
+    !uploaded_at.nil?
+  end
+
+  private
+
+  # shapehash is a hash of key => Class. It is used to assert the keys and types
+  # of test_hash
+  def validate_hash(shape_hash, test_hash)
+    shape_hash.all? do |k, type|
+      test_hash.keys.include? k && test_hash[k].class == type
+    end
   end
 end

@@ -1,0 +1,87 @@
+<form action="/admin/influencers" method="post">
+  <input type="hidden" name="_method" value="<%= @method %>">
+  <div class="columns">
+    <div class="column">
+      <div class="field">
+        <label class="label" for="first_name">First Name:</label>
+        <input class="input" type="text" name="first_name" id="first_name" value="<%= @influencer.first_name %>">
+      </div>
+      <div class="field">
+        <label class="label" for="last_name">Last Name:</label>
+        <input class="input" type="text" name="last_name" id="last_name" value="<%= @influencer.last_name %>">
+      </div>
+      <div class="field">
+        <label class="label" for="address1">Address Line 1:</label>
+        <input class="input" type="text" name="address1" id="address1" value="<%= @influencer.address1 %>">
+      </div>
+      <div class="field">
+        <label class="label" for="address2">Address Line 2:</label>
+        <input class="input" type="text" name="address2" id="address2" value="<%= @influencer.address2 %>">
+      </div>
+      <div class="field">
+        <label class="label" for="city">City:</label>
+        <input class="input" type="text" name="city" id="city" value="<%= @influencer.city %>">
+      </div>
+      <div class="field">
+        <label class="label" for="state">State:</label>
+        <input class="input" type="text" name="state" id="state" value="<%= @influencer.state %>">
+      </div>
+      <div class="field">
+        <label class="label" for="zip">Zip Code:</label>
+        <input class="input" type="text" name="zip" id="zip" value="<%= @influencer.zip %>">
+      </div>
+    </div>
+    <!-- ######################################################################### -->
+    <div class="column">
+      <div class="field">
+        <label class="label" for="email">Email:</label>
+        <input class="input" type="text" name="email" id="email" value="<%= @influencer.email %>">
+      </div>
+      <div class="field">
+        <label class="label" for="phone">Phone:</label>
+        <input class="input" type="text" size="20" name="phone" id="phone" value="<%= @influencer.phone %>">
+      </div>
+      <div class="field">
+        <label class="label" for="bra_size">Bra Size:</label>
+        <div class="select">
+          <select id="bra_size" name="bra_size">
+            <% Influencer::SIZE_VALUES.each do |size| %>
+              <option value="<%= size %>"<%= @influencer.bottom_size == size ? ' selected' : '' %>><%= size %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="top_size">Top Size</label>
+        <div class="select">
+          <select id="top_size" name="top_size">
+            <% Influencer::SIZE_VALUES.each do |size| %>
+              <option value="<%= size %>"<%= @influencer.bottom_size == size ? ' selected' : '' %>><%= size %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="bottom_size">Bottom Size:</label>
+        <div class="select">
+          <select id="bottom_size" name="bottom_size">
+            <% Influencer::SIZE_VALUES.each do |size| %>
+              <option value="<%= size %>"<%= @influencer.bottom_size == size ? ' selected' : '' %>><%= size %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="sports_jacket_size">Sports Jacket Size:</label>
+        <div class="select">
+          <select id="sports_jacket_size" name="sports_jacket_size">
+            <% Influencer::SIZE_VALUES.each do |size| %>
+              <option value="<%= size %>"<%= @influencer.bottom_size == size ? ' selected' : '' %>><%= size %></option>
+            <% end %>
+          </select>
+        </div>
+      </div> <!-- /.field -->
+      <input class="button is-success" type="submit" value="Submit" name="submit">
+    </div><!-- /.column -->
+  </div><!-- /.columns -->
+</form>
