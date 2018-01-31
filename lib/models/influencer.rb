@@ -63,7 +63,7 @@ class Influencer < ActiveRecord::Base
     influencer.update(attributes)
     if create_orders && influencer.valid?
       collection_id = row[13]
-      influencer.create_orders_from_collection collection_id
+      influencer.create_orders_from_collection collection_id, shipment_method_requested: row[14]
     end
     influencer
   end

@@ -4,11 +4,21 @@ class InfluencerOrder < ActiveRecord::Base
 
   CSV_DATE_FMT = '%m/%d/%Y %H:%M'
   CSV_HEADERS = ["order_number","groupon_number","order_date","merchant_sku_item","quantity_requested","shipment_method_requested","shipment_address_name","shipment_address_street","shipment_address_street_2","shipment_address_city","shipment_address_state","shipment_address_postal_code","shipment_address_country","gift","gift_message","quantity_shipped","shipment_carrier","shipment_method","shipment_tracking_number","ship_date","groupon_sku","custom_field_value","permalink","item_name","vendor_id","salesforce_deal_option_id","groupon_cost","billing_address_name","billing_address_street","billing_address_city","billing_address_state","billing_address_postal_code","billing_address_country","purchase_order_number","product_weight","product_weight_unit","product_length","product_width","product_height","product_dimension_unit","customer_phone","incoterms","hts_code","3pl_name","3pl_warehouse_location","kitting_details","sell_price","deal_opportunity_id","shipment_strategy","fulfillment_method","country_of_origin","merchant_permalink","feature_start_date","feature_end_date","bom_sku","payment_method","color_code","tax_rate","tax_price"]
+  LINE_ITEM_KEYS = [
+    'product_id',
+    'merchant_sku_item',
+    'size',
+    'quantity_requested',
+    'item_name',
+    'sell_price',
+    'product_weight',
+  ]
 
   validates :name, presence: true, format: /\A#IN/
   validates :billing_address, presence: true
   validates :shipping_address, presence: true
   validates :line_item, presence: true
+  validate :line_item_is_valid_hash
   validates :influencer_id, presence: true
 
   def self.generate_order_number
@@ -30,8 +40,9 @@ class InfluencerOrder < ActiveRecord::Base
       billing_address: influencer.billing_address,
       shipping_address: influencer.shipping_address,
       shipping_lines: shipping_lines,
-      line_item: [variant_line_item(variant)],
+      line_item: variant_line_item(variant),
       influencer_id: influencer.id,
+      shipment_method_requested: options[:shipment_method_requested]
     )
   end
 
@@ -83,6 +94,7 @@ class InfluencerOrder < ActiveRecord::Base
       'shipment_address_postal_code' => shipping_address["zip"],
       'shipment_address_state' => shipping_address["province_code"],
       'shipment_address_country' => shipping_address["country_code"],
+      'shipment_method_requested' => shipment_method_requested,
       'gift' => 'FALSE',
     }
   end
@@ -95,13 +107,34 @@ class InfluencerOrder < ActiveRecord::Base
     !uploaded_at.nil?
   end
 
+  def shipment_method_requested
+    attributes['shipment_method_requested'] || 'GROUND'
+  end
+
   private
 
   # shapehash is a hash of key => Class. It is used to assert the keys and types
   # of test_hash
   def validate_hash(shape_hash, test_hash)
-    shape_hash.all? do |k, type|
-      test_hash.keys.include? k && test_hash[k].class == type
+    shape_hash.flat_map do |k, type|
+      if test_hash.keys.include? k && test_hash[k].class == type
+        ["#{k} is should be a #{type}, but it is a #{test_hash[k].class}"]
+      else
+        []
+      end
     end
+  end
+
+  def line_item_is_valid_hash
+    shape_hash = {
+      'product_id' => Integer,
+      'merchant_sku_item' => String,
+      'size' => String,
+      'quantity_requested' => Integer,
+      'item_name' => String,
+      'sell_price' => Float,
+      'product_weight' => Integer,
+    }
+    validate_hash(shape_hash, line_item).each{ |msg| errors.add(:line_item, msg) }
   end
 end

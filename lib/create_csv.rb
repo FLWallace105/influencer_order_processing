@@ -155,7 +155,6 @@ def map_multiple_products(multiple_product_data, size_sku_data, line_item)
   }}
 
   #if output_items.length > 0
-    ##binding.pry
     #puts "DETECTED MULTI ITEM PRODUCT: #{line_item['product_id']} #{line_item['title']}"
     #puts "added #{output_items.length}"
   #end

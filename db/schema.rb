@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180123211445) do
+ActiveRecord::Schema.define(version: 20180131013916) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -24,6 +24,7 @@ ActiveRecord::Schema.define(version: 20180123211445) do
     t.jsonb "line_item"
     t.integer "influencer_id"
     t.datetime "uploaded_at"
+    t.string "shipment_method_requested"
   end
 
   create_table "influencer_tracking", force: :cascade do |t|

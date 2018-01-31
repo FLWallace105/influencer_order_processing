@@ -32,6 +32,7 @@ class App < Sinatra::Base
     # set the views directory to /app/views
     set :views, File.join(App.root, "app", "views")
     #use SessionNotificationsMiddleware
+    use PryRescue::Rack
   end
 
   authorize "Admin" do |username, password|
@@ -168,7 +169,6 @@ class App < Sinatra::Base
         # not found to avoid errors
         influencer = line_items.first.influencer || Influencer.new
         tracking = fline.tracking || InfluencerTracking.new
-
         OpenStruct.new(
           ids: simple_format(line_items.pluck(:id).join(", ")),
           order_number: simple_format(fline.name),
@@ -182,6 +182,7 @@ class App < Sinatra::Base
           influencer: influencer,
           influencer_name: "#{influencer.first_name} #{influencer.last_name}",
           uploaded_at: fline.uploaded_at,
+          shipment_method_requested: fline.shipment_method_requested,
           tracking: tracking,
           tracking_number: tracking.try(:tracking_number),
           carrier: tracking.try(:carrier),
@@ -196,6 +197,12 @@ class App < Sinatra::Base
     end
 
     post '/admin/orders/upload' do
+      order_params = model_params InfluencerOrder
+      orders = if order_params.empty? 
+                 InfluencerOrder.where(uploaded_at: nil).order(:name)
+               else
+                 InfluencerOrder.where(order_params).order(:name)
+               end
       csv_file = InfluencerOrder.create_csv orders
       # todo: orders should really not be marked uploaded until the upload succeeds.
       # This should be retooled in the future
@@ -292,7 +299,7 @@ class App < Sinatra::Base
     error = env['sinatra.error']
     erb error.message
   end
-  
+
   private
 
   def model_params(model)
