@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180131013916) do
+ActiveRecord::Schema.define(version: 20180131051326) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -25,6 +25,8 @@ ActiveRecord::Schema.define(version: 20180131013916) do
     t.integer "influencer_id"
     t.datetime "uploaded_at"
     t.string "shipment_method_requested"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "influencer_tracking", force: :cascade do |t|
@@ -50,7 +52,8 @@ ActiveRecord::Schema.define(version: 20180131013916) do
     t.string "top_size"
     t.string "bottom_size"
     t.string "sports_jacket_size"
-    t.boolean "three_item"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "shopify_collects", id: :bigint, default: nil, force: :cascade do |t|
