@@ -1,6 +1,6 @@
 require 'net/ftp'
 require 'csv'
-require_relative 'async'
+require_relative '../lib/async'
 
 class EllieFtp < Net::FTP
   include Async
