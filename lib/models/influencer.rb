@@ -5,7 +5,7 @@ class Influencer < ActiveRecord::Base
   alias :tracking :tracking_info
   
   SIZE_VALUES = %w(XS S M L XL)
-  INFLUENCER_HEADERS = ["first_name", "last_name", "address1", "address2", "city", "state", "zip", "email", "phone", "bra_size", "top_size", "bottom_size", "sports_jacket_size", "three_item"]
+  INFLUENCER_HEADERS = ["first_name", "last_name", "address1", "address2", "city", "state", "zip", "email", "phone", "bra_size", "top_size", "bottom_size", "sports_jacket_size", "collection_id", "shipping_method_requested"]
   SIZE_VALIDATION = {
     presence: true,
     inclusion: {

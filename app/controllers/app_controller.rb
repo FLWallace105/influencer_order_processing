@@ -1,6 +1,5 @@
 require_relative '../../lib/process_users'
 #require_relative '../../lib/create_csv'
-require_relative '../../lib/ftp'
 require 'sinatra/basic_auth'
 require_relative '../middleware/session_notifications'
 
@@ -207,7 +206,7 @@ class App < Sinatra::Base
       # todo: orders should really not be marked uploaded until the upload succeeds.
       # This should be retooled in the future
 
-      queued = EllieFtp.async :upload_orders_csv, csv_file
+      queued = Rescue.enqueue_to 'default', 'EllieFtp', :upload_orders_csv, csv_file
       if queued
         InfluencerOrder.where(name: orders.pluck('name').uniq)
           .update_all(uploaded_at: Time.current)
@@ -318,8 +317,8 @@ class App < Sinatra::Base
 
   def render_and_clear_notifications
     puts 'rendering and clearing notifications'
-    output = session[:notifications]
-    session[:notifications] = []
+    output = notifications
+    notifications = []
     output
   end
 
