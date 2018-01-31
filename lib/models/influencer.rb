@@ -61,9 +61,10 @@ class Influencer < ActiveRecord::Base
     }
     influencer = find_or_initialize_by(email: attributes[:email])
     influencer.update(attributes)
-    if create_orders && influencer.valid?
-      collection_id = row[13]
-      influencer.create_orders_from_collection collection_id, shipment_method_requested: row[14]
+    collection_id = row[13]
+    if create_orders && influencer.valid? && collection_id
+      orders = influencer.create_orders_from_collection collection_id, shipment_method_requested: row[14]
+      puts "created #{orders.count} orders for #{influencer.first_name} #{influencer.last_name}"
     end
     influencer
   end
@@ -80,7 +81,7 @@ class Influencer < ActiveRecord::Base
     sized_variants = sized_variants_from_collection(collection_id)
     creation_options[:order_number] ||= InfluencerOrder.generate_order_number
     sized_variants.map do |variant|
-      order = InfluencerOrder.create_from_influencer_variant(self, variant, creation_options)
+      InfluencerOrder.create_from_influencer_variant(self, variant, creation_options)
     end
   end
 

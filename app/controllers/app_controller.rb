@@ -168,8 +168,8 @@ class App < Sinatra::Base
         tracking = fline.tracking || InfluencerTracking.new
         OpenStruct.new(
           ids: simple_format(line_items.pluck(:id).join(", ")),
-          order_created_at: simple_format(order.created_at),
-          order_updated_at: simple_format(order.updated_at),
+          order_created_at: simple_format(fline.created_at.to_s),
+          order_updated_at: simple_format(fline.updated_at.to_s),
           order_number: simple_format(fline.name),
           processed_at: simple_format(fline.processed_at.iso8601),
           billing_address: fline.billing_address,
@@ -202,19 +202,31 @@ class App < Sinatra::Base
                else
                  InfluencerOrder.where(order_params).order(:name)
                end
-      csv_file = InfluencerOrder.create_csv orders
+      # Collect the list here because otherwise active record will keep running
+      # selects. This could potentially cause a race condition where orders are
+      # selected, uploaded, more unsent orders are added and they are all marked
+      # as uploaded.
+      orders_list = orders.collect
+      if orders_list.count > 0
+        csv_file = InfluencerOrder.create_csv orders_list
+        queued = Resque.enqueue_to 'default', 'EllieFtp', :upload_orders_csv, csv_file
+      else
+        queued = false
+      end
       # todo: orders should really not be marked uploaded until the upload succeeds.
       # This should be retooled in the future
-
-      queued = Resque.enqueue_to 'default', 'EllieFtp', :upload_orders_csv, csv_file
-      if queued
-        orders.update_all(uploaded_at: Time.current)
-        notifications << Notification.new("#{orders.count} orders sent to the warehouse.", header: 'Orders Sent', type: 'success')
-        redirect '/'
+      if queued && orders_list.count > 0
+        InfluencerOrder.where(id: orders_list.pluck(:id)).update_all(uploaded_at: Time.current)
+        notifications << Notification.new("#{orders.count} orders sent to the warehouse.",
+                                          header: 'Orders Sent', type: 'success')
+      elsif queued && orders_list == 0
+        notifications << Notification.new('No orders were sent to the warehouse',
+                                          header: 'No Orders to Send')
       else
-        notifications << Notification.new('Orders were not able to be sent to the warehouse.', header: 'Error')
-        redirect '/'
+        notifications << Notification.new('Orders were not able to be sent to the warehouse.',
+                                          header: 'Error', type: 'warning')
       end
+      redirect '/'
     end
 
     post '/admin/orders' do
