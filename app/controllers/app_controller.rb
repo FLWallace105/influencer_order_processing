@@ -39,7 +39,7 @@ class App < Sinatra::Base
   protect "Admin" do
 
     get '/' do
-      notifications << Notification.new('test message', type: :warning, header: 'Hello World')
+      #notifications << Notification.new('test message', type: :warning, header: 'Hello World')
       erb :'index'
     end
 
