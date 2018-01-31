@@ -3,7 +3,7 @@ FROM ruby:2.5-alpine
 ENV RUBY_ENV=development
 ENV PAGER=less
 VOLUME /tmp
-EXPOSE 9393
+EXPOSE 9292
 
 RUN mkdir -p /app && \
   gem install bundler && \
