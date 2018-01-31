@@ -29,8 +29,7 @@ class App < Sinatra::Base
     enable :method_override
     # set the views directory to /app/views
     set :views, File.join(App.root, "app", "views")
-    #use SessionNotificationsMiddleware
-    use PryRescue::Rack
+    #use PryRescue::Rack
   end
 
   authorize "Admin" do |username, password|
@@ -40,7 +39,7 @@ class App < Sinatra::Base
   protect "Admin" do
 
     get '/' do
-      #notifications << Notification.new('test message', type: :warning, header: 'Hello World')
+      notifications << Notification.new('test message', type: :warning, header: 'Hello World')
       erb :'index'
     end
 
@@ -308,7 +307,7 @@ class App < Sinatra::Base
 
   def notifications
     puts 'calling notifications get'
-    session[:notifications] || []
+    session[:notifications] ||= []
   end
 
   def notifications=(other)
@@ -318,9 +317,7 @@ class App < Sinatra::Base
 
   def render_and_clear_notifications
     puts 'rendering and clearing notifications'
-    output = notifications
-    notifications = []
-    output
+    notifications.pop(notifications.length)
   end
 
 end
