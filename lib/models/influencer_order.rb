@@ -111,6 +111,14 @@ class InfluencerOrder < ActiveRecord::Base
     attributes['shipment_method_requested'] || 'GROUND'
   end
 
+  def product_variant
+    ProductVariant.find_by sku: line_item['merchant_sku_item']
+  end
+
+  def product
+    Product.find line_item['product_id']
+  end
+
   private
 
   # shapehash is a hash of key => Class. It is used to assert the keys and types

@@ -168,6 +168,8 @@ class App < Sinatra::Base
         tracking = fline.tracking || InfluencerTracking.new
         OpenStruct.new(
           ids: simple_format(line_items.pluck(:id).join(", ")),
+          order_created_at: simple_format(order.created_at),
+          order_updated_at: simple_format(order.updated_at),
           order_number: simple_format(fline.name),
           processed_at: simple_format(fline.processed_at.iso8601),
           billing_address: fline.billing_address,
