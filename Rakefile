@@ -6,6 +6,7 @@ require 'resque/tasks'
 
 require_relative 'worker/pull'
 require_relative 'worker/send_email'
+require_relative 'worker/ftp'
 
 def file_input(env_var = 'FILE')
   if ENV['FILE'].nil?

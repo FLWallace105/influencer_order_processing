@@ -205,13 +205,15 @@ class App < Sinatra::Base
       # todo: orders should really not be marked uploaded until the upload succeeds.
       # This should be retooled in the future
 
-      queued = Rescue.enqueue_to 'default', 'EllieFtp', :upload_orders_csv, csv_file
+      queued = Resque.enqueue_to 'default', 'EllieFtp', :upload_orders_csv, csv_file
       if queued
-        InfluencerOrder.where(name: orders.pluck('name').uniq)
-          .update_all(uploaded_at: Time.current)
+        orders.update_all(uploaded_at: Time.current)
+        notifications << Notification.new("#{orders.count} orders sent to the warehouse.", header: 'Orders Sent', type: 'success')
+        redirect '/'
+      else
+        notifications << Notification.new('Orders were not able to be sent to the warehouse.', header: 'Error')
+        redirect '/'
       end
-      #send_file File.open csv_file, 'r'
-      erb :'orders/show'
     end
 
     post '/admin/orders' do
