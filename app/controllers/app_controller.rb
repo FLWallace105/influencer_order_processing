@@ -28,9 +28,10 @@ class App < Sinatra::Base
     enable :sessions
     set :session_secret, ENV['session_secret'] || 'this is a secret shhhhh'
 
+    enable :method_override
     # set the views directory to /app/views
     set :views, File.join(App.root, "app", "views")
-    use SessionNotificationsMiddleware
+    #use SessionNotificationsMiddleware
   end
 
   authorize "Admin" do |username, password|
@@ -40,7 +41,7 @@ class App < Sinatra::Base
   protect "Admin" do
 
     get '/' do
-      notifications << Notification.new('test message', type: :warning, header: 'Hello World')
+      #notifications << Notification.new('test message', type: :warning, header: 'Hello World')
       erb :'index'
     end
 
@@ -51,25 +52,37 @@ class App < Sinatra::Base
 
     # form target for influencer order csv
     post '/admin/uploads' do
-      influencer_data = params[:file][:tempfile].read
+      begin
+        influencer_data = params[:file][:tempfile].read
+      rescue NoMethodError => e
+        puts params.pretty_inspect
+        notifications << Notification.new('Must provide a file to upload')
+        redirect '/admin/uploads/new'
+      end
       utf_data = influencer_data.force_encoding('iso8859-1').encode('utf-8')
       rows = CSV.parse(utf_data, headers: true, header_converters: :symbol)
-      influencers = rows.map{|row| Influencer.from_csv_row(row).save}
-      notifications += influencers.flat_map do |i|
-        next [] if i.valid?
+      influencers = rows.map{|row| Influencer.from_csv_row(row)}
+      errors = influencers.flat_map do |i|
+        if i.valid?
+          i.save
+          next []
+        end
         message = i.full_messages.join("\n")
         [Notification.new(message, header: "#{i.name} has errors", type: 'error')]
       end
 
-      unless notifications.empty?
+      if errors.empty?
+        notifications << Notification.new("#{influencers.count} successfully uploaded", header: 'Influencers Uploaded', type: 'success')
+        redirect '/'
+      else
         status 422
-        return erb :'uploads/new'
+        errors.each{|error| notifications << error}
+        redirect '/admin/uploads/new'
       end
-
-      erb :'orders/new'
     end
 
     get '/admin/influencers' do
+      @title = 'Influencers'
       influencer_params = model_params Influencer
       @influencers = if influencer_params.empty?
                        Influencer.all.order(:last_name) 
@@ -91,13 +104,15 @@ class App < Sinatra::Base
       when 'create_orders'
         #raise DebugError
         influencers = Influencer.where(id: params[:ids])
-        collection_id = params[:collection_id]
-        influencers.each do |influencer|
-          influencer.create_orders_from_collection collection_id
+        # ensure the collection exists
+        collection = CustomCollection.find params[:collection_id]
+        new_orders = influencers.flat_map do |influencer|
+          influencer.create_orders_from_collection collection.id
         end
         msg = "Successfully created orders for #{influencers.count} influencers!"
         notifications << Notification.new(msg, type: 'success')
-        redirect '/'
+        ids_query_string = {id: new_orders.pluck{:id}}.to_query
+        redirect "/admin/orders?#{ids_query_string}"
       when 'delete'
         raise DebugError
       else
@@ -144,6 +159,7 @@ class App < Sinatra::Base
     end
 
     get '/admin/orders' do
+      @title = 'Influencer Orders'
       order_params = model_params InfluencerOrder
       orders = order_params.empty? ? InfluencerOrder.all.order(:uploaded_at) : InfluencerOrder.where(order_params).order(:uploaded_at)
       @table = orders.group_by(&:name).map do |k, line_items|
@@ -255,7 +271,7 @@ class App < Sinatra::Base
       raise DebugError
     end
 
-    options '/' do
+    options '/dump' do
       raise DebugError
     end
 
@@ -270,6 +286,11 @@ class App < Sinatra::Base
     delete '/dump' do
       raise DebugError
     end
+  end
+
+  error ActiveRecord::RecordNotFound do
+    error = env['sinatra.error']
+    erb error.message
   end
   
   private

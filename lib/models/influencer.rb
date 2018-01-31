@@ -59,15 +59,13 @@ class Influencer < ActiveRecord::Base
       bottom_size: row[11].upcase,
       sports_jacket_size: row[12].upcase,
     }
-    influencer = find_or_initialize_by(email: attributes.email).update(attributes)
+    influencer = find_or_initialize_by(email: attributes[:email])
+    influencer.update(attributes)
     if create_orders && influencer.valid?
       collection_id = row[13]
       influencer.create_orders_from_collection collection_id
     end
     influencer
-  end
-
-  def self.from_csv(file)
   end
 
   def sized_variants_from_collection(collection_id)
@@ -82,7 +80,7 @@ class Influencer < ActiveRecord::Base
     sized_variants = sized_variants_from_collection(collection_id)
     creation_options[:order_number] ||= InfluencerOrder.generate_order_number
     sized_variants.map do |variant|
-      InfluencerOrder.create_from_influencer_variant(self, variant, creation_options)
+      order = InfluencerOrder.create_from_influencer_variant(self, variant, creation_options)
     end
   end
 
@@ -107,14 +105,14 @@ class Influencer < ActiveRecord::Base
     }
   end
 
-  def self.shipping_address
+  def shipping_address
     address.merge(
       'first_name' => first_name,
       'last_name' => last_name,
     )
   end
 
-  def self.billing_address
+  def billing_address
     address.merge('name' => "#{first_name} #{last_name}")
   end
 
