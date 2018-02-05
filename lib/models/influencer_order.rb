@@ -13,6 +13,7 @@ class InfluencerOrder < ActiveRecord::Base
     'sell_price',
     'product_weight',
   ]
+  ORDER_NUMBER_CHARACTERS = [('a'..'z').to_a, ('A'..'Z').to_a, ('0'..'9').to_a].flatten.to_a.freeze
 
   validates :name, presence: true, format: /\A#IN/
   validates :billing_address, presence: true
@@ -22,7 +23,7 @@ class InfluencerOrder < ActiveRecord::Base
   validates :influencer_id, presence: true
 
   def self.generate_order_number
-    "#IN" + SecureRandom.random_number(36**12).to_s(36).rjust(11,"0")
+    "#IN" + (0..9).map{ORDER_NUMBER_CHARACTERS.sample}.join
   end
 
   def self.name_csv
