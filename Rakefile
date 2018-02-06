@@ -83,6 +83,6 @@ end
 # if this is changed be sure to update the crontab
 desc 'poll order tracking ftp server. Optional FTP_PATH. Usage: `rake poll_order_tracking [FTP_PATH=/my/path]`'
 task :poll_order_tracking do
-  path = ENV['FTP_PATH'] || '/SendOrder'
+  path = ENV['FTP_PATH'] || 'EllieInfluencer/SendOrder'
   EllieFtp.poll_order_tracking path
 end
