@@ -17,6 +17,7 @@ gem 'resque'
 gem 'redis'
 gem "shopify-api-throttle", git: 'https://github.com/bradrees/shopify-api-throttle.git'
 gem 'puma'
+gem 'iconv' # for translating utf8 to ascii for ACS csv
 
 group :development do
   gem 'pry'
