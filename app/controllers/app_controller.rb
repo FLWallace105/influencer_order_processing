@@ -163,7 +163,7 @@ class App < Sinatra::Base
         fline = line_items.first
         # set default blank objects if the associated influencer or tracking are
         # not found to avoid errors
-        influencer = line_items.first.influencer || Influencer.new
+        influencer = fline.influencer || Influencer.new
         tracking = fline.tracking || InfluencerTracking.new
         OpenStruct.new(
           ids: simple_format(line_items.pluck(:id).join(", ")),
