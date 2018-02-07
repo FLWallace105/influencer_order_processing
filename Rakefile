@@ -25,27 +25,27 @@ namespace :pull do
 
   desc 'refresh all caches from shopify'
   task :all do |t|
-    ShopifyCache.pull_all
+    ShopifyCache.async :pull_all
   end
 
   desc 'refresh orders cache from shopify'
   task :orders do |t|
-    ShopifyCache.pull_orders
+    ShopifyCache.async :pull_orders
   end
 
   desc 'refresh products cache from shopify'
   task :products do |t|
-    ShopifyCache.pull_products
+    ShopifyCache.async :pull_products
   end
 
   desc 'refresh custom collections cache from shopify'
   task :custom_collections do |t|
-    ShopifyCache.pull_custom_collections
+    ShopifyCache.async :pull_custom_collections
   end
 
   desc 'refresh collects cache from shopify'
   task :collects do |t|
-    ShopifyCache.pull_collects
+    ShopifyCache.async :pull_collects
   end
 
 end
@@ -84,5 +84,5 @@ end
 desc 'poll order tracking ftp server. Optional FTP_PATH. Usage: `rake poll_order_tracking [FTP_PATH=/my/path]`'
 task :poll_order_tracking do
   path = ENV['FTP_PATH'] || 'EllieInfluencer/SendOrder'
-  EllieFtp.poll_order_tracking path
+  EllieFtp.async :poll_order_tracking, path
 end

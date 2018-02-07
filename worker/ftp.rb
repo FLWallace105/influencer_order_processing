@@ -8,22 +8,26 @@ class EllieFtp < Net::FTP
   def self.upload_orders_csv(file, options = {})
     directory = options[:directory] || '/EllieInfluencer/ReceiveOrder'
     ftp = new(ENV['FTP_HOST'], username: ENV['FTP_USER'], password: ENV['FTP_PASSWORD'], debug_mode: true)
+    puts "Starting orders csv upload of #{file} to #{directory} on #{ENV['FTP_HOST']}"
     ftp.chdir directory
     ftp.put(File.open file)
-    puts 'i put it!'
     ftp.close
+    puts 'Successfully uploaded csv'
   end
 
   def self.poll_order_tracking(directory = '/EllieInfluencer/SendOrder')
+    puts "Polling tracking FTP server: #{directory}"
     ftp = new(ENV['FTP_HOST'], username: ENV['FTP_USER'], password: ENV['FTP_PASSWORD'], debug_mode: true)
     ftp.chdir directory
     dir = ftp.mlsd
     dir.select{|entry| entry.type == 'file' && /^ORDERTRK/ =~ entry.pathname}.each do |entry|
+      puts "Found #{entry.pathname}"
       ftp.process_tracking_csv entry.pathname
     end
   end
 
   def process_tracking_csv(path)
+    puts "Starting Tracking CSV processing of #{path}"
     tracking_data = get_tracking_csv path
 
     # add all influencer lines to the database
@@ -34,6 +38,7 @@ class EllieFtp < Net::FTP
         tracking = InfluencerTracking
           .create_with(carrier: tracking_line['carrier'], email_sent_at: nil)
           .find_or_create_by(order_id: order.id, tracking_number: tracking_line['tracking_1'])
+        puts "Sending tracking email to #{tracking.influencer.email}"
         tracking.send_email unless tracking.email_sent?
       rescue ActiveRecord::RecordNotFound => e
         puts e
@@ -43,6 +48,7 @@ class EllieFtp < Net::FTP
 
     # move the processed file to the archive
     begin
+      puts "Archiving #{path} on FTP server"
       pathname = Pathname.new path
       rename(path, pathname.dirname + 'Archive' + pathname.basename)
     rescue Net::FTPPermError => e
