@@ -141,7 +141,7 @@ class App < Sinatra::Base
       send_file(file_to_download, :filename => file_to_download)
     end
 
-    # orders
+    # ORDERS
 
     # used to generate new orders for existing influencers
     post '/admin/influencers/orders' do
@@ -158,7 +158,7 @@ class App < Sinatra::Base
     get '/admin/orders' do
       @title = 'Influencer Orders'
       order_params = model_params InfluencerOrder
-      orders = order_params.empty? ? InfluencerOrder.all.order(:uploaded_at) : InfluencerOrder.where(order_params).order(:uploaded_at)
+      orders = order_params.empty? ? InfluencerOrder.all.order(uploaded_at: :desc) : InfluencerOrder.where(order_params).order(uploaded_at: :desc)
       @table = orders.group_by(&:name).map do |k, line_items|
         fline = line_items.first
         # set default blank objects if the associated influencer or tracking are
