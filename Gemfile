@@ -25,10 +25,10 @@ group :development do
   gem 'pry-stack_explorer'
   gem 'pry-rescue'
   gem 'shotgun'
-  gem 'sqlite3'
+  #gem 'sqlite3'
   gem 'rspec'
   gem 'factory_bot'
-  gem 'capybara'
+  #gem 'capybara'
   gem 'faker'
 end
 
