@@ -44,26 +44,27 @@ class Influencer < ActiveRecord::Base
   end
 
   def self.from_csv_row(row, create_orders: true)
+    clean_row = row.map(&:strip)
     attributes = {
-      first_name: row[0],
-      last_name: row[1],
-      address1: row[2],
-      address2: row[3],
-      city: row[4],
-      state: row[5],
-      zip: row[6],
-      email: row[7],
-      phone: row[8],
-      bra_size: row[9].upcase,
-      top_size: row[10].upcase,
-      bottom_size: row[11].upcase,
-      sports_jacket_size: row[12].upcase,
+      first_name: clean_row[0],
+      last_name: clean_row[1],
+      address1: clean_row[2],
+      address2: clean_row[3],
+      city: clean_row[4],
+      state: clean_row[5],
+      zip: clean_row[6],
+      email: clean_row[7],
+      phone: clean_row[8],
+      bra_size: clean_row[9].upcase,
+      top_size: clean_row[10].upcase,
+      bottom_size: clean_row[11].upcase,
+      sports_jacket_size: clean_row[12].upcase,
     }
     influencer = find_or_initialize_by(email: attributes[:email])
     influencer.update(attributes)
-    collection_id = row[13]
+    collection_id = clean_row[13]
     if create_orders && influencer.valid? && collection_id
-      orders = influencer.create_orders_from_collection collection_id, shipment_method_requested: row[14]
+      orders = influencer.create_orders_from_collection collection_id, shipment_method_requested: clean_row[14]
       puts "created #{orders.count} orders for #{influencer.first_name} #{influencer.last_name}"
     end
     influencer
