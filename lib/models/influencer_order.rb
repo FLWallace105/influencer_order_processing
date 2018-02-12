@@ -1,4 +1,6 @@
 class InfluencerOrder < ActiveRecord::Base
+  include ApplicationRecord
+
   belongs_to :influencer
   has_one :tracking, class_name: 'InfluencerTracking', foreign_key: 'order_id'
 

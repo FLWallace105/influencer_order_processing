@@ -1,4 +1,6 @@
 class Influencer < ActiveRecord::Base
+  include ApplicationRecord
+
   has_many :orders, class_name: 'InfluencerOrder'
   has_many :tracking_info, class_name: 'InfluencerTracking'
   alias :tracking_numbers :tracking_info
