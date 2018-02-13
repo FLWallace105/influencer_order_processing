@@ -9,7 +9,7 @@ gem 'activerecord'
 gem 'activesupport'
 gem 'sinatra-activerecord'
 gem 'sinatra-basic-auth', require: 'sinatra/basic_auth'
-gem 'pg'
+gem 'pg', '~>0.18'
 gem 'rake'
 gem 'httparty'
 gem 'sendgrid-ruby'
@@ -30,6 +30,7 @@ group :development do
   gem 'factory_bot'
   #gem 'capybara'
   gem 'faker'
+  gem 'minitest-around'
 end
 
 # Added at 2018-01-04 19:08:52 -0800 by ryan:
