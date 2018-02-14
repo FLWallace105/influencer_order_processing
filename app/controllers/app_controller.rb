@@ -206,7 +206,7 @@ class App < Sinatra::Base
       # selects. This could potentially cause a race condition where orders are
       # selected, uploaded, more unsent orders are added and they are all marked
       # as uploaded.
-      orders_list = orders.collect
+      orders_list = orders.to_a
       if orders_list.count > 0
         csv_file = InfluencerOrder.create_csv orders_list
         queued = Resque.enqueue_to 'default', 'EllieFtp', :upload_orders_csv, csv_file
