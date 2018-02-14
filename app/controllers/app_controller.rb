@@ -57,14 +57,15 @@ class App < Sinatra::Base
         redirect '/admin/uploads/new'
       end
       utf_data = influencer_data.force_encoding('iso8859-1').encode('utf-8')
-      rows = CSV.parse(utf_data, headers: true, header_converters: :symbol)
+      #rows = CSV.parse(utf_data, headers: true, header_converters: :symbol)
+      rows = CSV.parse(utf_data)
       influencers = rows.map{|row| Influencer.from_csv_row(row)}
       errors = influencers.flat_map do |i|
         if i.valid?
           i.save
           next []
         end
-        message = i.full_messages.join("\n")
+        message = i.errors.full_messages.join("\n")
         [Notification.new(message, header: "#{i.name} has errors", type: 'error')]
       end
 

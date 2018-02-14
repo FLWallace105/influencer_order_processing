@@ -44,7 +44,7 @@ class Influencer < ActiveRecord::Base
   end
 
   def self.from_csv_row(row, create_orders: true)
-    clean_row = row.map(&:strip)
+    clean_row = row.map{|cell| cell.try(:strip)}
     attributes = {
       first_name: clean_row[0],
       last_name: clean_row[1],
