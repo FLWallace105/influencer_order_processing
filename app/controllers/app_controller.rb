@@ -1,4 +1,3 @@
-require_relative '../../lib/process_users'
 require 'sinatra/basic_auth'
 
 $apikey = ENV['SHOPIFY_API_KEY']
