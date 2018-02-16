@@ -5,7 +5,7 @@ class AddOrderNameToTracking < ActiveRecord::Migration[5.1]
     InfluencerTracking.reset_column_information
 
     default_name = "NONE"
-    InfluencerTracking.all.joins(:order).each do |t|
+    InfluencerTracking.all.each do |t|
       order = InfluencerOrder.find(id: t.order_id)
       t.update(order_name: order.name || default_name).save!
     rescue
