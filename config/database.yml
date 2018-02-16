@@ -1,0 +1,21 @@
+---
+default: &default
+  adapter: postgresql
+  database: development
+  host: postgres
+  port: 5432
+  user: postgres
+  password: 1amadmin
+  pool: 4
+
+development:
+  <<: *default
+  database: development
+
+testing:
+  <<: *default
+  database: testing
+
+production:
+  <<: *default
+  database: production

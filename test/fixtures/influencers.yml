@@ -1,0 +1,29 @@
+fred:
+  first_name: fred
+  last_name: flintstone
+  address1: 1234 Rocky Ln
+  address2:
+  city: Bedrock
+  state: CA
+  zip: 90210
+  email: fred@flintstone.com
+  phone: 800-555-1234
+  bra_size: L
+  top_size: XL
+  bottom_size: L
+  sports_jacket_size: XL
+
+wilma:
+  first_name: wilma
+  last_name: flintstone
+  address1: 1234 Rocky Ln
+  address2:
+  city: Bedrock
+  state: CA
+  zip: 90210
+  email: wilma@flintstone.com
+  phone: 800-555-4321
+  bra_size: L
+  top_size: XL
+  bottom_size: L
+  sports_jacket_size: XL

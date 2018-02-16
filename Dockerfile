@@ -1,6 +1,5 @@
 FROM ruby:2.5-alpine
 
-ENV RUBY_ENV=development
 ENV PAGER=less
 VOLUME /tmp
 EXPOSE 9292

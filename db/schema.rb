@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180131051326) do
+ActiveRecord::Schema.define(version: 20180216203030) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -27,15 +27,17 @@ ActiveRecord::Schema.define(version: 20180131051326) do
     t.string "shipment_method_requested"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["name"], name: "index_influencer_orders_on_name"
   end
 
   create_table "influencer_tracking", force: :cascade do |t|
-    t.bigint "order_id"
     t.string "carrier"
     t.string "tracking_number"
     t.datetime "email_sent_at"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.string "order_name", null: false
+    t.index ["order_name"], name: "index_influencer_tracking_on_order_name"
   end
 
   create_table "influencers", force: :cascade do |t|
