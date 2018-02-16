@@ -56,14 +56,15 @@ class App < Sinatra::Base
         redirect '/admin/uploads/new'
       end
       utf_data = influencer_data.force_encoding('iso8859-1').encode('utf-8')
-      rows = CSV.parse(utf_data, headers: true, header_converters: :symbol)
+      #rows = CSV.parse(utf_data, headers: true, header_converters: :symbol)
+      rows = CSV.parse(utf_data)
       influencers = rows.map{|row| Influencer.from_csv_row(row)}
       errors = influencers.flat_map do |i|
         if i.valid?
           i.save
           next []
         end
-        message = i.full_messages.join("\n")
+        message = i.errors.full_messages.join("\n")
         [Notification.new(message, header: "#{i.name} has errors", type: 'error')]
       end
 
@@ -213,7 +214,7 @@ class App < Sinatra::Base
       # selects. This could potentially cause a race condition where orders are
       # selected, uploaded, more unsent orders are added and they are all marked
       # as uploaded.
-      orders_list = orders.collect
+      orders_list = orders.to_a
       if orders_list.count > 0
         csv_file = InfluencerOrder.create_csv orders_list
         queued = Resque.enqueue_to 'default', 'EllieFtp', :upload_orders_csv, csv_file
