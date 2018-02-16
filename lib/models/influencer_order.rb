@@ -64,7 +64,7 @@ class InfluencerOrder < ActiveRecord::Base
     # create empty CSV file with appropriate name
     filename = '/tmp/' + name_csv
     rows = orders.map(&:to_row_hash)
-    clean_rows = rows.map{|k,v| [k, Iconv.conv('ASCII//TRANSLIT', 'UTF-8', v)]}.to_h
+    clean_rows = rows.map{|row| row.map{|k, v| [k, Iconv.conv('ASCII//TRANSLIT', 'UTF-8', v.to_s)]}.to_h}
     puts "#{orders.length} Order line items"
     file = CSV.open(filename, 'w', headers: CSV_HEADERS) do |csv|
       csv << CSV_HEADERS
