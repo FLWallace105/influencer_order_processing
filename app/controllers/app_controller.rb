@@ -156,9 +156,18 @@ class App < Sinatra::Base
     end
 
     get '/admin/orders' do
+      # This method takes any param thuat has the same name as on of the model
+      # attributes and filters by the given value. In addition there are 
       @title = 'Influencer Orders'
+      # because we need to name the column for ordering we need to
+      sort_str = sort_params(params, 'influencer_orders', 'uploaded_at', 'desc')
       order_params = model_params InfluencerOrder
-      orders = order_params.empty? ? InfluencerOrder.all.order(uploaded_at: :desc) : InfluencerOrder.where(order_params).order(uploaded_at: :desc)
+      if order_params.empty?
+        orders = InfluencerOrder.all.left_joins(:influencer, :tracking)
+          .order(sort_str)
+      else
+        orders = InfluencerOrder.where(order_params)
+      end
       @table = orders.group_by(&:name).map do |k, line_items|
         fline = line_items.first
         # set default blank objects if the associated influencer or tracking are
@@ -319,18 +328,25 @@ class App < Sinatra::Base
   end
 
   def notifications
-    puts 'calling notifications get'
     session[:notifications] ||= []
   end
 
   def notifications=(other)
-    puts "calling notification set with #{other.inspect}"
     session[:notifications] = other
   end
 
   def render_and_clear_notifications
-    puts 'rendering and clearing notifications'
     notifications.pop(notifications.length)
+  end
+
+  # creates a string safe for passing to #order()
+  def sort_params(params, default_sort_table, default_sort_by, default_sort_dir)
+    clean_field_re = /[^_A-Za-z0-9]/
+    sort_table = params['sort_table'].try(:gsub, clean_field_re, '') || default_sort_table
+    sort_by = params['sort_by'].try(:gsub, clean_field_re, '') || default_sort_by
+    sort_dir = params['sort_dir'] || default_sort_dir
+    #sort_obj = {(params['sort_table'] || 'orders') => {(params['sort_by'] || 'orders') => (params['sort_dir'] || 'ASC')}}
+    sort_str = "#{sort_table}.#{sort_by} #{sort_dir}"
   end
 
 end

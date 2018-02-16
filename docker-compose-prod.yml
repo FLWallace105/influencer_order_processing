@@ -31,11 +31,6 @@ services:
       - 9292:9292
     volumes:
       - app-output:/tmp
-      - ./:/app
-    depends_on:
-      - postgres
-      - redis
-    command: ["shotgun", "--host", "0.0.0.0", "-p", "9292", "-r", "./config/environment.rb"]
 
   worker:
     image: influencer_orders
@@ -43,41 +38,14 @@ services:
     depends_on:
       - redis
       - postgres
-      - ftp
     volumes:
       - app-output:/tmp
-      - ./:/app
     env_file: .env
     environment:
       - QUEUE=*
     command: ["rake", "resque:work"]
 
-  postgres:
-    image: postgres
-    env_file: .env
-    ports:
-      - 5432
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-  pgadmin:
-    image: thajeztah/pgadmin4
-    ports:
-      - 5050
-    volumes:
-      - pgadmin-data:/pgadmin
-
-  ftp:
-    image: ftp
-    build:
-      context: .
-      dockerfile: Dockerfile.ftp
-    volumes:
-      - ./test/ftp_mnt:/home
-
 volumes:
   app-output:
   rescue-web-data:
-  postgres-data:
-  pgadmin-data:
 

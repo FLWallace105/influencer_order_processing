@@ -7,7 +7,7 @@ class EllieFtp < Net::FTP
 
   def self.upload_orders_csv(file, options = {})
     directory = options[:directory] || '/EllieInfluencer/ReceiveOrder'
-    ftp = new(ENV['FTP_HOST'], username: ENV['FTP_USER'], password: ENV['FTP_PASSWORD'], debug_mode: true)
+    ftp = new(ENV['FTP_HOST'], username: ENV['FTP_USER'], password: ENV['FTP_PASS'], debug_mode: true)
     puts "Starting orders csv upload of #{file} to #{directory} on #{ENV['FTP_HOST']}"
     ftp.chdir directory
     ftp.put(File.open file)
@@ -17,7 +17,7 @@ class EllieFtp < Net::FTP
 
   def self.poll_order_tracking(directory = '/EllieInfluencer/SendOrder')
     puts "Polling tracking FTP server: #{directory}"
-    ftp = new(ENV['FTP_HOST'], username: ENV['FTP_USER'], password: ENV['FTP_PASSWORD'], debug_mode: true)
+    ftp = new(ENV['FTP_HOST'], username: ENV['FTP_USER'], password: ENV['FTP_PASS'], debug_mode: true)
     ftp.chdir directory
     dir = ftp.mlsd
     dir.select{|entry| entry.type == 'file' && /^ORDERTRK/ =~ entry.pathname}.each do |entry|

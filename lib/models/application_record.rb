@@ -1,6 +1,6 @@
 module ApplicationRecord
 
-  included do |base|
+  def self.included(base)
     base.extend(ClassMethods)
   end
 

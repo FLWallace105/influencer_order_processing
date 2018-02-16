@@ -1,0 +1,24 @@
+# FTP server for TESTING ONLY with ellie influencer tracking and upload
+FROM alpine:latest
+
+EXPOSE 21
+EXPOSE 20
+EXPOSE 30000-30010
+
+VOLUME /home
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["/ftp-entrypoint.sh"]
+
+ARG FTP_USER=fambrands
+ARG FTP_PASS=sportswear
+
+RUN apk update && \
+  apk add tini vsftpd && \
+  adduser $FTP_USER -G ftp -D -s /sbin/nologin && \
+  echo "$FTP_USER:$FTP_PASS" | chpasswd && \
+  mkdir /home/$FTP_USER && \
+  chown $FTP_USER: /HOME/$FTP_USER
+
+COPY ./ftp-entrypoint.sh /
+COPY ./vsftpd.conf /etc/vsftpd.conf

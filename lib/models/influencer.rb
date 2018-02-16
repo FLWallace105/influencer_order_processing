@@ -75,7 +75,7 @@ class Influencer < ActiveRecord::Base
   def sized_variants_from_collection(collection_id)
     product_ids = Collect.where(collection_id: collection_id).pluck(:product_id)
     variants = ProductVariant.where(product_id: product_ids)
-    sized_variants = variants.select do |variant|
+    variants.select do |variant|
       variant.size == 'ONE SIZE' || variant.size == sizes[variant.product.product_type]
     end
   end

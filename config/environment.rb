@@ -16,7 +16,7 @@ require 'logger'
 require 'erb'
 if File.exists?(ENV['BUNDLE_GEMFILE'])
   require 'bundler'
-  Bundler.require(:default, ENV['RACK_ENV'] || :development)
+  Bundler.require(:default, ENVIRONMENT || :development)
 end
 
 # Some helper constants for path-centric logic
