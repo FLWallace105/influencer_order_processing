@@ -34,12 +34,13 @@ class EllieFtp < Net::FTP
     # add a send_email job if one has not been sent already
     tracking_data.select{|line| /^#IN/ =~ line['fulfillment_line_item_id']}.each do |tracking_line|
       begin
-        order = InfluencerOrder.find_by!(name: tracking_line['fulfillment_line_item_id'])
         tracking = InfluencerTracking
           .create_with(carrier: tracking_line['carrier'], email_sent_at: nil)
-          .find_or_create_by(order_id: order.id, tracking_number: tracking_line['tracking_1'])
-        puts "Sending tracking email to #{tracking.influencer.email}"
-        tracking.send_email unless tracking.email_sent?
+          .find_or_create_by(order_name: line['fulfillment_line_item_id'], tracking_number: tracking_line['tracking_1'])
+        unless tracking.email_sent?
+          puts "Sending tracking email to #{tracking.influencer.email}"
+          tracking.send_email
+        end
       rescue ActiveRecord::RecordNotFound => e
         puts e
         next
