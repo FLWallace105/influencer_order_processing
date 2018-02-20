@@ -19,14 +19,15 @@ class App < Sinatra::Base
   configure do
     # by default, sinatra assumes that the root is the file that calls the configure block.
     # since this is not the case for us, we set it manually.
-    set :root, APP_ROOT.to_path if APP_ROOT
+    set :root, APP_ROOT.to_path
     # see: http://www.sinatrarb.com/faq.html#sessions
     enable :sessions
     set :session_secret, ENV['session_secret'] || 'this is a secret shhhhh'
 
     enable :method_override
     # set the views directory to /app/views
-    set :views, File.join(App.root, "app", "views")
+    set :views, File.join(App.root, 'app', 'views')
+    set :public_folder, APP_ROOT.join('app', 'static').to_path
     #use PryRescue::Rack
   end
 
@@ -156,47 +157,55 @@ class App < Sinatra::Base
     end
 
     get '/admin/orders' do
-      # This method takes any param thuat has the same name as on of the model
-      # attributes and filters by the given value. In addition there are 
-      @title = 'Influencer Orders'
-      # because we need to name the column for ordering we need to
+      #raise 'debug'
+      filter_params = params['filter'] || []
+      limit = params['limit'] || 50
+      page = params['page'] || 1
       sort_str = sort_params(params, 'influencer_orders', 'uploaded_at', 'desc')
       order_params = model_params InfluencerOrder
-      if order_params.empty?
-        orders = InfluencerOrder.all.left_joins(:influencer, :tracking)
-          .order(sort_str)
+
+      page = InfluencerOrder.select('DISTINCT name')
+        .paginate(page: page, limit: limit)
+      orders = InfluencerOrder.where(name: page.results.pluck(:name))
+        .joins(:influencer, :tracking).order(sort_str)
+      orders = filter(filter_params, orders)
+
+      if request.accept? 'test/html'
+        @title = 'Influencer Orders'
+        @page = page
+        @table = orders.group_by(&:name).map do |k, line_items|
+          fline = line_items.first
+          # set default blank objects if the associated influencer or tracking are
+          # not found to avoid errors
+          influencer = fline.influencer || Influencer.new
+          tracking = fline.tracking || InfluencerTracking.new
+          OpenStruct.new(
+            ids: simple_format(line_items.pluck(:id).join(", ")),
+            order_created_at: simple_format(fline.created_at.to_s),
+            order_updated_at: simple_format(fline.updated_at.to_s),
+            order_number: simple_format(fline.name),
+            processed_at: simple_format(fline.processed_at.iso8601),
+            billing_address: fline.billing_address,
+            formatted_billing_address: simple_format(format_address(fline.billing_address)),
+            shipping_address: fline.shipping_address,
+            formatted_shipping_address: simple_format(format_address(fline.shipping_address)),
+            line_items: line_items.pluck(:line_item),
+            formatted_line_items: simple_format(line_items.pluck(:line_item).pluck('item_name').join("\n")),
+            influencer: influencer,
+            influencer_name: "#{influencer.first_name} #{influencer.last_name}",
+            uploaded_at: fline.uploaded_at,
+            shipment_method_requested: fline.shipment_method_requested,
+            tracking: tracking,
+            tracking_number: tracking.try(:tracking_number),
+            carrier: tracking.try(:carrier),
+            tracking_created: tracking.created_at.try(:iso8601),
+          )
+        end
+        erb :'orders/index'
       else
-        orders = InfluencerOrder.where(order_params)
+        json_obj = orders.map{|o| o.as_json.merge(influencer: o.influencer)}
+        return json_response({orders: json_obj, page: page.page, page_count: page.count})
       end
-      @table = orders.group_by(&:name).map do |k, line_items|
-        fline = line_items.first
-        # set default blank objects if the associated influencer or tracking are
-        # not found to avoid errors
-        influencer = fline.influencer || Influencer.new
-        tracking = fline.tracking || InfluencerTracking.new
-        OpenStruct.new(
-          ids: simple_format(line_items.pluck(:id).join(", ")),
-          order_created_at: simple_format(fline.created_at.to_s),
-          order_updated_at: simple_format(fline.updated_at.to_s),
-          order_number: simple_format(fline.name),
-          processed_at: simple_format(fline.processed_at.iso8601),
-          billing_address: fline.billing_address,
-          formatted_billing_address: simple_format(format_address(fline.billing_address)),
-          shipping_address: fline.shipping_address,
-          formatted_shipping_address: simple_format(format_address(fline.shipping_address)),
-          line_items: line_items.pluck(:line_item),
-          formatted_line_items: simple_format(line_items.pluck(:line_item).pluck('item_name').join("\n")),
-          influencer: influencer,
-          influencer_name: "#{influencer.first_name} #{influencer.last_name}",
-          uploaded_at: fline.uploaded_at,
-          shipment_method_requested: fline.shipment_method_requested,
-          tracking: tracking,
-          tracking_number: tracking.try(:tracking_number),
-          carrier: tracking.try(:carrier),
-          tracking_created: tracking.created_at.try(:iso8601),
-        )
-      end
-      erb :'orders/index'
     end
 
     get '/admin/orders/new' do
@@ -323,6 +332,11 @@ class App < Sinatra::Base
 
   private
 
+  def json_response(object, status: 200, headers: {})
+    all_headers = {'Content-Type' => 'application/json'}.merge headers
+    [status, all_headers, object.to_json]
+  end
+
   def model_params(model)
     model.column_names.map{|col| params.assoc col}.reject(&:nil?).to_h
   end
@@ -346,7 +360,33 @@ class App < Sinatra::Base
     sort_by = params['sort_by'].try(:gsub, clean_field_re, '') || default_sort_by
     sort_dir = params['sort_dir'] || default_sort_dir
     #sort_obj = {(params['sort_table'] || 'orders') => {(params['sort_by'] || 'orders') => (params['sort_dir'] || 'ASC')}}
-    sort_str = "#{sort_table}.#{sort_by} #{sort_dir}"
+    if sort_table
+      "#{sort_table}.#{sort_by} #{sort_dir}"
+    else
+      "#{sort_by} #{sort_dir}"
+    end
+  end
+
+  def filter(filter_params, query)
+    ops = {
+      'gt' => '>',
+      'gte' => '>=',
+      'lt' => '<',
+      'lte' => '<=',
+      'eq' => '=',
+      'is' => 'is',
+      'like' => 'LIKE',
+      'in' => 'IN',
+    }
+    filter_params.reduce(query) do |filter|
+      sql_obj_re = /[^A-Za-z0-9_]/
+      where_query = ""
+      table = filter.table.gsub(sql_obj_re, '') rescue ''
+      where_query += "#{table}." unless table.empty?
+      where_query += "#{filter.column}"
+      where_query += " #{ops[filter.op] || '='} ?"
+      query.where(where_query, filter.val)
+    end
   end
 
 end
