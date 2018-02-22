@@ -1,4 +1,4 @@
-class ProductVariant < ActiveRecord::Base
+class ProductVariant < ApplicationRecord
   self.table_name = 'shopify_product_variants'
 
   belongs_to :product

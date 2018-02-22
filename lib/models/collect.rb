@@ -1,4 +1,4 @@
-class Collect < ActiveRecord::Base
+class Collect < ApplicationRecord
   self.table_name = 'shopify_collects'
 
   belongs_to :product

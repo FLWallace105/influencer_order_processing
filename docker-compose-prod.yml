@@ -6,6 +6,7 @@ services:
     image: redis
     ports:
       - 6379
+    restart: always
 
   resque_web:
     image: rescue_web
@@ -20,17 +21,22 @@ services:
       - RESQUE_WEB_REDIS=redis:6379
     volumes:
       - rescue-web-data:/data
+    restart: always
 
   web:
     image: influencer_orders
     build:
       context: .
       dockerfile: Dockerfile
+    depends_on:
+      - redis
+      - elasticsearch
     env_file: .env
     ports:
       - 9292:9292
     volumes:
       - app-output:/tmp
+    restart: always
 
   worker:
     image: influencer_orders
@@ -38,14 +44,33 @@ services:
     depends_on:
       - redis
       - postgres
+      - elasticsearch
     volumes:
       - app-output:/tmp
     env_file: .env
     environment:
       - QUEUE=*
     command: ["rake", "resque:work"]
+    restart: always
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.2
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.zen.ping.unicast.hosts=elasticsearch"
+    env_file: .env
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    restart: always
 
 volumes:
   app-output:
   rescue-web-data:
+  elasticsearch-data:
 

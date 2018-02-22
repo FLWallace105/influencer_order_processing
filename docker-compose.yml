@@ -35,6 +35,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - elasticsearch
     command: ["shotgun", "--host", "0.0.0.0", "-p", "9292", "-r", "./config/environment.rb"]
 
   worker:
@@ -44,6 +45,7 @@ services:
       - redis
       - postgres
       - ftp
+      - elasticsearch
     volumes:
       - app-output:/tmp
       - ./:/app
@@ -75,9 +77,25 @@ services:
     volumes:
       - ./test/ftp_mnt:/home
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.2
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms100m -Xmx100m"
+      - discovery.type=single-node
+    env_file: .env
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
 volumes:
   app-output:
   rescue-web-data:
   postgres-data:
   pgadmin-data:
+  elasticsearch-data:
 

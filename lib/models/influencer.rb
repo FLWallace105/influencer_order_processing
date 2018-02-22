@@ -1,5 +1,6 @@
-class Influencer < ActiveRecord::Base
-  include ApplicationRecord
+class Influencer < ApplicationRecord
+
+  searchkick callbacks: :async, inheritance: true
 
   has_many :orders, class_name: 'InfluencerOrder'
   has_many :tracking_info, class_name: 'InfluencerTracking'
@@ -31,6 +32,7 @@ class Influencer < ActiveRecord::Base
   validates :sports_jacket_size, SIZE_VALIDATION
   validates :email, presence: true
 
+  after_commit :reindex_orders
 
   def self.to_csv
     filename = '/tmp/' + 'current_influencers.csv'
@@ -118,6 +120,10 @@ class Influencer < ActiveRecord::Base
 
   def billing_address
     address.merge('name' => "#{first_name} #{last_name}")
+  end
+
+  def reindex_orders
+    orders.each(&:reindex)
   end
 
 end

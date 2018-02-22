@@ -32,3 +32,8 @@ end
 
 # Added at 2018-01-04 19:08:52 -0800 by ryan:
 gem "dotenv", "~> 2.2"
+
+# Added at 2018-02-20 14:57:13 -0800 by ryan:
+gem 'searchkick'
+gem 'connection_pool'
+

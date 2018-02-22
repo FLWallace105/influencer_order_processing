@@ -1,4 +1,4 @@
-class CustomCollection < ActiveRecord::Base
+class CustomCollection < ApplicationRecord
   self.table_name = 'shopify_custom_collections'
 
   has_many :collects, foreign_key: 'collection_id'

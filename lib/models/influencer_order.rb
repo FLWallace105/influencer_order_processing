@@ -1,5 +1,6 @@
-class InfluencerOrder < ActiveRecord::Base
-  include ApplicationRecord
+class InfluencerOrder < ApplicationRecord
+
+  searchkick callbacks: :async, inheritance: true
 
   belongs_to :influencer
   has_one(:tracking, class_name: 'InfluencerTracking', foreign_key: 'order_name',
@@ -24,6 +25,8 @@ class InfluencerOrder < ActiveRecord::Base
   validates :line_item, presence: true
   validate :line_item_is_valid_hash
   validates :influencer_id, presence: true
+
+  scope :search_import, ->{ includes(:tracking, :influencer) }
 
   def self.generate_order_number
     "#IN" + (0..9).map{ORDER_NUMBER_CHARACTERS.sample}.join
@@ -122,6 +125,10 @@ class InfluencerOrder < ActiveRecord::Base
 
   def product
     Product.find line_item['product_id']
+  end
+
+  def search_data
+    as_json.merge(influencer: influencer, tracking: tracking)
   end
 
   private

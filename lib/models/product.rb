@@ -1,4 +1,4 @@
-class Product < ActiveRecord::Base
+class Product < ApplicationRecord
   self.table_name = 'shopify_products'
 
   has_many :variants, class_name: 'ProductVariant'

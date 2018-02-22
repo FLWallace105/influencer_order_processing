@@ -1,10 +1,11 @@
-class InfluencerTracking < ActiveRecord::Base
-  include ApplicationRecord
+class InfluencerTracking < ApplicationRecord
 
   self.table_name = 'influencer_tracking'
   has_many(:orders, class_name: 'InfluencerOrder', foreign_key: 'name',
            primary_key: 'order_name')
   has_one :influencer, through: 'order'
+
+  after_commit :reindex_orders
 
   def email_data
     {
@@ -20,5 +21,9 @@ class InfluencerTracking < ActiveRecord::Base
 
   def send_email
     Resque.enqueue_to(:default, 'SendEmail', id)
+  end
+
+  def reindex_orders
+    orders.each(&:reindex)
   end
 end
