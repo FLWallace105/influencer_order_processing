@@ -31,32 +31,43 @@ docker-compose run --rm worker rake pull:products
 ```
 
 Launch the application:
-```
+```shell
 docker-compose up -d
 ```
 
 Stop the application:
-```
+```shell
 docker-compose down
 ```
 
 Restart the application:
-```
+```shell
 docker-compose restart
 ```
 
 View logs:
-```
+```shell
 docker-compose logs -f
 ```
 
 ### Production Notes
+There is a seperate docker-compose file for production that runs services with a
+configuration more suitable for a production environment. By default
+`docker-compose` will run the development images. The commands above must be
+altered to take advantage of this production configuration.
 
-The product elasticsearch image has a couple extra requirements from the host
+```shell
+docker-compose -f docker-compose-prod.yml <command> [args...]
+```
+
+#### Elasticsearch
+
+The production elasticsearch image has a couple extra requirements from the host
 kernel. It requires that the `vm.max_map_count` variable be set to at least
 262144. To set this on a running machine use `sudo sysctl -w vm.max_map_count=262144`.
 To make this setting persist after reboot create the following file:
-```
+
+```shell
 # /etc/sysctl.d/10-vm-max-map-count.conf
 
 # This directive was originally added to run the elasticsearch docker image
@@ -64,6 +75,7 @@ To make this setting persist after reboot create the following file:
 # https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html#docker-cli-run-prod-mode
 vm.max_map_count=262144
 ```
+
 See [here](https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html#docker-cli-run-prod-mode)
 for more info.
 
@@ -74,6 +86,7 @@ your own `.env` file as appropriate for your environment.
 
 The following environment variables are required. They have been filled in with
 their default development values for running under docker.
+
 ```shell
 REDIS_URL=redis://redis:6379
 RACK_ENV=development
@@ -98,15 +111,33 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 ```
 
-## Development
+## Testing
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run
-`rake test` to run the tests. You can also run `bin/console` for an interactive
-prompt that will allow you to experiment.
+Tests are run using `rake test`. To invoke tests in the docker test environment
+run `docker-compose run --rm worker rake test`.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To
-release a new version, update the version number in `version.rb`, and then run
-`bundle exec rake release`, which will create a git tag for the version, push
-git commits and tags, and push the `.gem` file to
-[rubygems.org](https://rubygems.org).
+See [the testing guide](/file/TESTING.md) for more information on writing
+tests.
 
+## API Docs
+
+API docs are created / maintained using YARD. Here are a couple very helpful
+commands when developing againste this project.
+
+Run a web server with all API docs (regenerates docs on file changes):
+```shell
+yard server -r
+```
+
+Documentation for project Gems
+
+```shell
+# after bundle install
+yard gems
+
+# to generate documentation when new gems are installed
+yard config --gem-install-yri
+
+# run server
+yard server --gemfile
+```

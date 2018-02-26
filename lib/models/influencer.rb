@@ -1,3 +1,5 @@
+# Represents a person that receives orders that we do not want to go through
+# Shopify.
 class Influencer < ApplicationRecord
 
   searchkick callbacks: :async, inheritance: true
@@ -31,9 +33,13 @@ class Influencer < ApplicationRecord
   validates :bottom_size, SIZE_VALIDATION
   validates :sports_jacket_size, SIZE_VALIDATION
   validates :email, presence: true
+  validate :validate_no_commas
 
   after_commit :reindex_orders
 
+  # Create a CSV of all influencer data.
+  #
+  # @return [String] path to CSV file
   def self.to_csv
     filename = '/tmp/' + 'current_influencers.csv'
     CSV.open(filename, 'w+', headers: INFLUENCER_HEADERS) do |csv|
@@ -47,6 +53,13 @@ class Influencer < ApplicationRecord
     filename
   end
 
+  # Create or update and influencer from a array of influencer CSV row data.
+  #
+  # @param row [Array<String>] CSV row data
+  # @param :create_orders [Bool] flag to toggle the creation of orders from the
+  #   CSV data where the collection_id is present
+  # @return [Influencer] The influencer created / found and updated by the CSV
+  #   data
   def self.from_csv_row(row, create_orders: true)
     clean_row = row.map{|cell| cell.try(:strip)}
     attributes = {
@@ -69,11 +82,15 @@ class Influencer < ApplicationRecord
     collection_id = clean_row[13]
     if create_orders && influencer.valid? && collection_id
       orders = influencer.create_orders_from_collection collection_id, shipment_method_requested: clean_row[14]
-      puts "created #{orders.count} orders for #{influencer.first_name} #{influencer.last_name}"
+      logger.info "created #{orders.count} orders for #{influencer.first_name} #{influencer.last_name}"
     end
     influencer
   end
 
+  # Get the appropriate product variants from the influencer's size data. The
+  # products are sourced from the given collection_id.
+  #
+  # @param collection_id [Integer] ID of the collection to source products from
   def sized_variants_from_collection(collection_id)
     product_ids = Collect.where(collection_id: collection_id).pluck(:product_id)
     variants = ProductVariant.where(product_id: product_ids)
@@ -82,6 +99,12 @@ class Influencer < ApplicationRecord
     end
   end
 
+  # Create orders with the product variants sourced from the given collection_id
+  #
+  # @param collection_id [Integer] product collection ID to use
+  # @param order_number: [String] option to manually assign an order number to the
+  #   generated orders
+  # @param shipping_lines: [Hash] option to override the default shipping line data
   def create_orders_from_collection(collection_id, creation_options = {})
     sized_variants = sized_variants_from_collection(collection_id)
     creation_options[:order_number] ||= InfluencerOrder.generate_order_number
@@ -90,6 +113,9 @@ class Influencer < ApplicationRecord
     end
   end
 
+  # Formats sizes for storing in InfluencerOrder
+  #
+  # @return [Hash] sizes for all product types
   def sizes
     {
       'Leggings' => bottom_size,
@@ -99,6 +125,9 @@ class Influencer < ApplicationRecord
     }
   end
 
+  # Formats address for storing in InfluencerOrder
+  #
+  # @return [Hash]
   def address
     {
       'address1' => address1,
@@ -111,6 +140,9 @@ class Influencer < ApplicationRecord
     }
   end
 
+  # Emulates a Shopify shipping address object
+  #
+  # @return [Hash]
   def shipping_address
     address.merge(
       'first_name' => first_name,
@@ -118,12 +150,40 @@ class Influencer < ApplicationRecord
     )
   end
 
+  # Emulates a Shopify billing address object
+  #
+  # @return [Hash]
   def billing_address
     address.merge('name' => "#{first_name} #{last_name}")
   end
 
+  # Callback for updating associated orders index
+  #
+  # @return [Bool] true if successfully queued
   def reindex_orders
-    orders.each(&:reindex)
+    InfluencerOrder.async :reindex_where, influencer_id: id
+  end
+
+  # Make sure there are no commas in any field. Commas in our data will cause
+  # the CSV library to quote the cell. The warehouse cannot process CSV's with
+  # double quotes.
+  def validate_no_commas(record)
+    fields = [
+      'first_name',
+      'last_name',
+      'address1',
+      'address2',
+      'city',
+      'zip',
+      'state',
+      'email',
+      'phone',
+    ]
+    fields.each do |field|
+      if record.send(field).to_s =~ /,/
+        record.errors[:field] << "#{field} cannot contain commas"
+      end
+    end
   end
 
 end

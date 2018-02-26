@@ -1,7 +1,9 @@
 require_relative '../lib/async'
+require_relative '../lib/logging.rb'
 
 module ShopifyCache
   include Async
+  include Logging
 
   # Caches both Products and the associated ProductVariants
   def self.pull_products
@@ -48,9 +50,9 @@ module ShopifyCache
   #
   # Returns: nil
   def self.pull_entity(api_entity, db_entity, query_params = {})
-    puts "Starting pull of #{api_entity}"
+    logger.info "Starting pull of #{api_entity}"
     count = api_entity.count
-    puts "Found #{count} records"
+    logger.info "Found #{count} records"
     limit = 250
     pages = count.fdiv(limit).ceil
     objects = (1..pages).flat_map do |page|
@@ -61,7 +63,7 @@ module ShopifyCache
       data = block_given? ? yield(object.attributes.as_json) : object.attributes.as_json
       db_entity.find_or_initialize_by(id: object.id).update(data)
     end
-    puts "Pull of #{api_entity} complete"
+    logger.info "Pull of #{api_entity} complete"
     return
   end
 end

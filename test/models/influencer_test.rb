@@ -4,7 +4,7 @@ require 'pry'
 class InfluencerTest < ActiveSupport::TestCase
 
   def test_valid_influencer()
-    puts Influencer.connection.pretty_inspect
+    #logger.debug Influencer.connection.pretty_inspect
   end
 
 end

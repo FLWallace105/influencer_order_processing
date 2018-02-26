@@ -1,0 +1,29 @@
+<%# locals: current_page, last_page %>
+<nav class="pagination">
+
+  <a class="pagination-previous" href="?<%= params.merge(page: current_page - 1).to_query %>"<%= current_page == 1 ? '  disabled' : '' %>>&lt;</a>
+  <a class="pagination-next" href="?<%= params.merge(page: current_page + 1).to_query %>"<%= current_page == last_page ? ' disabled' : '' %>>&gt;</a>
+
+  <ul class="pagination-list">
+
+    <% if current_page - 1 > 2 %>
+      <li><a class="pagination-link" href="?<%= params.merge(page: 1).to_query %>">1</a></li>
+      <li><span class="pagination-ellipsis">&hellip;</span></li>
+    <% end %>
+
+    <% ((current_page - 2)..(current_page + 2)).select{|p| p > 0 && p <= last_page}.each do |page| %>
+      <% if page == current_page %>
+        <li><a class="pagination-link is-current" disabled><%= page %></a></li>
+      <% else %>
+        <li><a class="pagination-link" href="?<%= params.merge(page: page).to_query %>"><%= page %></a></li>
+      <% end %>
+    <% end %>
+
+    <% if last_page - current_page > 2 %>
+      <li><span class="pagination-ellipsis">&hellip;</span></li>
+      <li><a class="pagination-link" href="?<%= params.merge(page: last_page).to_query %>"><%= last_page %></a></li>
+    <% end %>
+
+  </ul>
+
+</nav>

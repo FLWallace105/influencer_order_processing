@@ -1,3 +1,14 @@
+<div class="level">
+  <div class="level-item">
+    <form method="get">
+      <label for="filter">Search</label>
+      <input id="filter" type="text" name="filter" value="<%= @filter %>">
+    </form>
+  </div>
+  <div class="level-item">
+    <%= erb :pager, locals: {current_page: @pagination.page, last_page: @pagination.count}%>
+  </div>
+</div>
 <table class="table">
   <thead>
     <th>Order Number</th>

@@ -187,18 +187,22 @@ class App < Sinatra::Base
 
   # List all orders and their tracking information
   #
-  # @param filter [Filter] this is the string used to search a given
+  # @param filter [String] this is the string used to search a given
   #   influencer, order, tracking set
-  # @param page [Page] the current result page
-  # @param limit [Limit] the number of results per page
+  # @param page [Integer] the current result page
+  # @param limit [Integer] the number of results per page
   get '/admin/orders' do
     #raise 'debug'
-    filter_params = params['filter'] || []
-    limit = params['limit'] || 50
-    page = params['page'] || 1
+    @filter = params['filter']
+    @limit = params['limit'] || 50
+    @page = params['page'] || 1
     sort_str = sort_params(params, 'influencer_orders', 'uploaded_at', 'desc')
-    page_data =
-      if params['filter']
+    @pagination =
+      if @filter.nil? || @filter.empty?
+        names = InfluencerOrder.select('DISTINCT name')
+          .pluck(:name)
+        Paginate.new(names, page: @page, limit: @limit)
+      else
         names = InfluencerOrder.search(
           params['filter'],
           fields: [
@@ -219,19 +223,14 @@ class App < Sinatra::Base
           ],
           select: ['name'],
         ).pluck(:name).uniq
-        Paginate.new(names)
-      else
-        InfluencerOrder.select('DISTINCT name')
-          .paginate(page: page, limit: limit)
-          .pluck(:name)
+        Paginate.new(names, page: @page, limit: @limit)
       end
 
-    orders = InfluencerOrder.where(name: page_data.result)
+    orders = InfluencerOrder.where(name: @pagination.results)
       .joins(:influencer, :tracking).order(sort_str)
 
     if request.accept? 'text/html'
       @title = 'Influencer Orders'
-      @page = page
       @table = orders.group_by(&:name).map do |k, line_items|
         fline = line_items.first
         # set default blank objects if the associated influencer or tracking are
@@ -262,8 +261,8 @@ class App < Sinatra::Base
       end
       erb :'orders/index'
     else
-      json_obj = orders.map{|o| o.as_json.merge(influencer: o.influencer)}
-      return json_response({orders: json_obj, page: page.page, page_count: page.count})
+      json_obj = @pagination.as_json.merge(data: orders)
+      return json_response(json_obj)
     end
   end
 

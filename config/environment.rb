@@ -14,9 +14,12 @@ require 'uri'
 require 'pathname'
 require 'logger'
 require 'erb'
-if File.exists?(ENV['BUNDLE_GEMFILE'])
+if File.exist?(ENV['BUNDLE_GEMFILE'])
+  original_verbosity = $VERBOSE
+  $VERBOSE = nil
   require 'bundler'
-  Bundler.require(:default, ENVIRONMENT || :development)
+  Bundler.require(:default, ENVIRONMENT)
+  $VERBOSE = original_verbosity
 end
 
 # Some helper constants for path-centric logic
@@ -41,8 +44,21 @@ def autoload_path(path)
   end
 end
 
+def load_yml(path)
+  b = binding
+  Psych.load(ERB.new(File.open(path.to_s, 'r').read).result(b))
+end
+
 autoload_path APP_ROOT.join('app', 'helpers', '*.rb')
 
 # Set up the database and models
 require APP_ROOT.join('config', 'database')
 autoload_path APP_ROOT.join('lib', 'models', '*.rb')
+
+# load ftp configuration
+require APP_ROOT.join('worker', 'ftp')
+ftp_config = load_yml(APP_ROOT.join('config', 'ftp.yml'))[ENVIRONMENT.to_s]
+EllieFtp.host = ftp_config['host']
+EllieFtp.user = ftp_config['user']
+EllieFtp.password = ftp_config['password']
+

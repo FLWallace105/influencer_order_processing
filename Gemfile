@@ -2,38 +2,46 @@ source "https://rubygems.org"
 
 git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
-gem 'sinatra', require: 'sinatra/base'
-gem 'shopify_api'
-gem 'recharge-api'
 gem 'activerecord'
 gem 'activesupport'
+gem 'connection_pool'
+gem "dotenv", "~> 2.2"
+gem 'httparty'
+gem 'iconv' # for translating utf8 to ascii for ACS csv
+gem 'pg', '~>0.18'
+gem 'puma'
+gem 'rake'
+gem 'recharge-api'
+gem 'redis'
+gem 'resque'
+gem 'searchkick'
+gem 'sendgrid-ruby'
+gem 'shopify_api'
+gem "shopify-api-throttle", git: 'https://github.com/bradrees/shopify-api-throttle.git'
 gem 'sinatra-activerecord'
 gem 'sinatra-basic-auth', require: 'sinatra/basic_auth'
-gem 'pg', '~>0.18'
-gem 'rake'
-gem 'httparty'
-gem 'sendgrid-ruby'
-gem 'resque'
-gem 'redis'
-gem "shopify-api-throttle", git: 'https://github.com/bradrees/shopify-api-throttle.git'
-gem 'puma'
-gem 'iconv' # for translating utf8 to ascii for ACS csv
+gem 'sinatra', require: 'sinatra/base'
 
-group :development do
+group :development, :testing do
   gem 'pry'
   gem 'pry-stack_explorer'
   gem 'pry-rescue'
-  gem 'shotgun'
   gem 'faker'
-  # testing
-  gem 'minitest-around'
-  gem 'rack-test'
 end
 
-# Added at 2018-01-04 19:08:52 -0800 by ryan:
-gem "dotenv", "~> 2.2"
+group :development do
+  gem 'shotgun'
+  # docs
+  gem 'yard'
+  gem 'yard-sinatra'
+  gem 'yard-activerecord'
+  gem 'redcarpet'
+end
 
-# Added at 2018-02-20 14:57:13 -0800 by ryan:
-gem 'searchkick'
-gem 'connection_pool'
+group :testing do
+  gem 'minitest-around'
+  gem 'rack-test'
+  gem 'mocha'
+  gem 'minitest-hooks'
+end
 

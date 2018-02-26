@@ -8,10 +8,7 @@ end
 db_yml_path = APP_ROOT.join('config', 'database.yml')
 
 if db_yml_path.exist?
-  b = binding
-  db_config = Psych.load(ERB.new(File.open(db_yml_path, 'r').read).result(b))
-  #puts db_config.pretty_inspect
-  ActiveRecord::Base.configurations = db_config
+  ActiveRecord::Base.configurations = load_yml db_yml_path
   ActiveRecord::Base.establish_connection
 elsif ENV['DATABASE_URL']
   ActiveRecord::Base.establish_connection(ENV['DATABASE_URL'])

@@ -1,0 +1,17 @@
+---
+
+default: &default
+  host: ftp
+  user: ftp_user
+  password: ftp_pass
+
+development:
+  <<: *default
+
+testing:
+  <<: *default
+
+production:
+  host:
+  user:
+  password:

@@ -1,3 +1,9 @@
+# Despite the name an instance of InfluencerOrders actually represents a single
+# line item withion an order. These are used to generate order CSV's for the
+# warehouse and ultimately resolve tracking via the InfluencerOrder#name.
+#
+# A logical order is represented by one or more InfluencerOrders with a shared
+# `#name` value.
 class InfluencerOrder < ApplicationRecord
 
   searchkick callbacks: :async, inheritance: true
@@ -28,15 +34,29 @@ class InfluencerOrder < ApplicationRecord
 
   scope :search_import, ->{ includes(:tracking, :influencer) }
 
-  def self.generate_order_number
-    "#IN" + (0..9).map{ORDER_NUMBER_CHARACTERS.sample}.join
+  # Generate a order number
+  #
+  # @param prefix: [String] A prefix for the order number. Defaults to '#IN'.
+  def self.generate_order_number(prefix: '#IN')
+    prefix + (0..9).map{ORDER_NUMBER_CHARACTERS.sample}.join
   end
 
+  # Generate the name for a Order CSV based on the current time and date.
+  #
+  # @return [String] the file name
   def self.name_csv
     "Orders_#{Time.current.strftime("%Y_%m_%d_%H_%M_%S_%L")}.csv"
   end
 
 
+  # Create a order from a given influencer and variant
+  #
+  # @param influencer [Influencer] influencer to create the order for
+  # @param variant [ProductVariant] the product variant to sent the
+  #   influencer
+  # @param order_number: [String] create with the given order number / name
+  #   instead of generating
+  # @return [InfluencerOrder] the order created
   def self.create_from_influencer_variant(influencer, variant, options = {})
     # shipping lines blank most of the time
     shipping_lines = options[:shipping_lines]
@@ -53,6 +73,11 @@ class InfluencerOrder < ApplicationRecord
     )
   end
 
+  # Create line_item data from a given Product Variant
+  #
+  # @param variant [ProductVariant] the product variant
+  # @param quantity [Integer] The line item quantity.
+  # @return [Hash] line item data
   def self.variant_line_item(variant, quantity = 1)
     {
       'product_id' => variant.product_id,
@@ -65,13 +90,19 @@ class InfluencerOrder < ApplicationRecord
     }
   end
 
+  # Create a CSV from the given orders_list or from any orders that have not
+  # been marked as uploaded.
+  #
+  # @param orders_list [Enumerable<InfluencerOrder>] an enumerable of orders to
+  #   include in the CSV
+  # @return [String] file path od the CSV
   def self.create_csv(orders_list = nil)
     orders = orders_list || where(uploaded_at: nil)
     # create empty CSV file with appropriate name
     filename = '/tmp/' + name_csv
     rows = orders.map(&:to_row_hash)
     clean_rows = rows.map{|row| row.map{|k, v| [k, Iconv.conv('ASCII//TRANSLIT', 'UTF-8', v.to_s)]}.to_h}
-    puts "#{orders.length} Order line items"
+    logger.debug "#{orders.length} Order line items"
     file = CSV.open(filename, 'w', headers: CSV_HEADERS) do |csv|
       csv << CSV_HEADERS
       clean_rows.each{|data| csv << CSV_HEADERS.map{|key| data[key]} }
@@ -79,6 +110,9 @@ class InfluencerOrder < ApplicationRecord
     filename
   end
 
+  # Create a hash of CSV data keyed by the CSV header names
+  #
+  # @return [Hash] Order CSV row data
   def to_row_hash
     {
       'order_number' => name,
@@ -107,26 +141,45 @@ class InfluencerOrder < ApplicationRecord
     }
   end
 
+  # the address to send the order to
+  #
+  # @return [Hash] address data
   def address
     self.class.address influencer
   end
 
+  # Has the order been marked as uploaded to the warehouse
+  # 
+  # @return [Bool]
   def uploaded?
     !uploaded_at.nil?
   end
 
+  # Provides a default of 'GROUND' for shipment_methed_requested
+  #
+  # @return [String]
   def shipment_method_requested
     attributes['shipment_method_requested'] || 'GROUND'
   end
 
+  # The product variant associated with the order
+  #
+  # @return [ProductVariant]
   def product_variant
     ProductVariant.find_by sku: line_item['merchant_sku_item']
   end
 
+  # The product associated with the order
+  #
+  # @return [Product]
   def product
     Product.find line_item['product_id']
   end
 
+  # Override the data stored for searching orders to include influencers and
+  # tracking.
+  # 
+  # @return [Hash] search data
   def search_data
     as_json.merge(influencer: influencer, tracking: tracking)
   end

@@ -8,7 +8,7 @@ services:
       - 6379
 
   resque_web:
-    image: rescue_web
+    #image: rescue_web
     build:
       context: .
       dockerfile: Dockerfile.resque_web
@@ -22,7 +22,7 @@ services:
       - rescue-web-data:/data
 
   web:
-    image: influencer_orders
+    #image: influencer_orders
     build:
       context: .
       dockerfile: Dockerfile
@@ -39,7 +39,10 @@ services:
     command: ["shotgun", "--host", "0.0.0.0", "-p", "9292", "-r", "./config/environment.rb"]
 
   worker:
-    image: influencer_orders
+    #image: influencer_orders
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: ["shotgun"]
     depends_on:
       - redis
@@ -52,6 +55,7 @@ services:
     env_file: .env
     environment:
       - QUEUE=*
+      - VERBOSE=true
     command: ["rake", "resque:work"]
 
   postgres:
@@ -70,7 +74,7 @@ services:
       - pgadmin-data:/pgadmin
 
   ftp:
-    image: ftp
+    #image: ftp
     build:
       context: .
       dockerfile: Dockerfile.ftp

@@ -3,9 +3,14 @@ class InfluencerTracking < ApplicationRecord
   self.table_name = 'influencer_tracking'
   has_many(:orders, class_name: 'InfluencerOrder', foreign_key: 'name',
            primary_key: 'order_name')
-  has_one :influencer, through: 'order'
 
   after_commit :reindex_orders
+
+  def influencer
+    orders.first.influencer
+  rescue
+    nil
+  end
 
   def email_data
     {
@@ -24,6 +29,6 @@ class InfluencerTracking < ApplicationRecord
   end
 
   def reindex_orders
-    orders.each(&:reindex)
+    InfluencerOrder.async :reindex_where, name: order_name
   end
 end

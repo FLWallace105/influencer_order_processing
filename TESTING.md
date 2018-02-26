@@ -1,5 +1,10 @@
 # Testing Guide
 
+Tests are written using the Minitest framework and stored inder `/test`. Model
+fixtures are stored in `/test/fixtures`. Mocha stubs are used for most of the
+API / Async assertions to prevent calls that would have undesired effects on
+environments outside our control.
+
 ## Fixtures
 Fixtures are loaded by `ActiveSupport::TestCase` and so follow all the normal
 Rails testing conventions oulined in their [testing
