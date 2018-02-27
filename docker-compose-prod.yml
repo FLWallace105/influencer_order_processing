@@ -24,7 +24,6 @@ services:
     restart: always
 
   web:
-    image: influencer_orders
     build:
       context: .
       dockerfile: Dockerfile
@@ -39,16 +38,17 @@ services:
     restart: always
 
   worker:
-    image: influencer_orders
-    command: ["shotgun"]
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       - redis
-      - postgres
       - elasticsearch
     volumes:
       - app-output:/tmp
     env_file: .env
     environment:
+      - VERBOSE=true
       - QUEUE=*
     command: ["rake", "resque:work"]
     restart: always
