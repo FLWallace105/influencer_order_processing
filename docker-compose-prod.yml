@@ -9,7 +9,6 @@ services:
     restart: always
 
   resque_web:
-    image: rescue_web
     build:
       context: .
       dockerfile: Dockerfile.resque_web
@@ -58,7 +57,7 @@ services:
     environment:
       - cluster.name=docker-cluster
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ES_JAVA_OPTS=-Xms100m -Xmx100m"
       - "discovery.zen.ping.unicast.hosts=elasticsearch"
     env_file: .env
     ulimits:
