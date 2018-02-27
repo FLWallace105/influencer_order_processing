@@ -29,7 +29,7 @@ class SendEmail
       content = Content.new(type: 'text/plain', value: "#{influencer.first_name}, your order is on its way! Your tracking information is below: \n
       Carrier: #{tracking.carrier} \n
       Tracking Number: #{tracking.tracking_number} \n
-      Order Number: #{tracking.order.name}")
+      Order Number: #{tracking.order_name}")
 
       mail = Mail.new(from, subject, to, content)
       logger.info mail.to_json
@@ -44,8 +44,6 @@ class SendEmail
       tracking.email_sent_at = Time.current
       tracking.save
       logger.info "** Sent! **"
-    rescue Exception => e
-      logger.error e
     end
 
   end
