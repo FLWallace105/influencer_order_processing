@@ -40,6 +40,10 @@ class SendEmail
       logger.debug response.status_code
       logger.debug response.body
       logger.debug response.headers
+
+      unless (200..299).include? response.status_code
+        raise "Error sending email: #{response.inspect}"
+      end
       
       tracking.email_sent_at = Time.current
       tracking.save
