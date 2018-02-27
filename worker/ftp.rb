@@ -47,7 +47,7 @@ class EllieFtp < Net::FTP
       begin
         tracking = InfluencerTracking
           .create_with(carrier: tracking_line['carrier'], email_sent_at: nil)
-          .find_or_create_by(order_name: line['fulfillment_line_item_id'], tracking_number: tracking_line['tracking_1'])
+          .find_or_create_by(order_name: tracking_line['fulfillment_line_item_id'], tracking_number: tracking_line['tracking_1'])
         unless tracking.email_sent?
           logger.info "Sending tracking email to #{tracking.influencer.email}"
           tracking.send_email
