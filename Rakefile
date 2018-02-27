@@ -88,3 +88,18 @@ task :poll_order_tracking do
   path = ENV['FTP_PATH'] || 'EllieInfluencer/SendOrder'
   EllieFtp.async :poll_order_tracking, path
 end
+
+namespace :searchkick do
+  task :environment do |t|
+  end
+
+  #desc 'reindex all model search indexes'
+  #task :reindex do |t|
+    #Influencer.reindex_async
+    #InfluencerTracking.reindex_async
+    #InfluencerOrder.reindex_async
+    #Product.reindex_async
+    #Collect.reindex_async
+    #CustomCollection.reindex_async
+  #end
+end
