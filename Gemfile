@@ -39,7 +39,6 @@ group :development do
 end
 
 group :testing do
-  gem 'minitest-around'
   gem 'rack-test'
   gem 'mocha'
   gem 'minitest-hooks'

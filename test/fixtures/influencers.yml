@@ -1,6 +1,7 @@
+--- !omap
 fred:
-  first_name: fred
-  last_name: flintstone
+  first_name: Fred
+  last_name: Flintstone
   address1: 1234 Rocky Ln
   address2:
   city: Bedrock
@@ -14,8 +15,8 @@ fred:
   sports_jacket_size: XL
 
 wilma:
-  first_name: wilma
-  last_name: flintstone
+  first_name: Wilma
+  last_name: Flintstone
   address1: 1234 Rocky Ln
   address2:
   city: Bedrock

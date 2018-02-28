@@ -167,7 +167,7 @@ class Influencer < ApplicationRecord
   # Make sure there are no commas in any field. Commas in our data will cause
   # the CSV library to quote the cell. The warehouse cannot process CSV's with
   # double quotes.
-  def validate_no_commas(record)
+  def validate_no_commas
     fields = [
       'first_name',
       'last_name',
@@ -180,8 +180,8 @@ class Influencer < ApplicationRecord
       'phone',
     ]
     fields.each do |field|
-      if record.send(field).to_s =~ /,/
-        record.errors[:field] << "#{field} cannot contain commas"
+      if send(field).to_s =~ /,/
+        errors[field] << "#{field} cannot contain commas"
       end
     end
   end

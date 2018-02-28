@@ -51,6 +51,7 @@ namespace :pull do
 end
 
 Rake::TestTask.new(:test) do |t|
+  ENV['RACK_ENV'] = 'testing'
   t.libs << "test"
   t.libs << "lib"
   t.warning = false

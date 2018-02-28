@@ -2,6 +2,11 @@ require_relative 'test_helper'
 require './worker/ftp'
 
 class FtpTest < Minitest::Test
+
+  def before_all
+
+  end
+
   def test_poll_order_tracking_when_empty
   end
 

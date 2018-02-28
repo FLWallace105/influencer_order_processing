@@ -40,6 +40,6 @@ class PaginateTest < Minitest::Test
     p = Paginate.new(a, limit: 3)
     assert_equal 1, p.as_json['page']
     assert_equal 3, p.as_json['page_count']
-    assert_equal [1,2,3], p.as_json['integers']
+    assert_equal [1,2,3], p.as_json['data']
   end
 end

@@ -61,3 +61,5 @@ build-iPhoneSimulator/
 /test/ftp_mnt/*
 /config/database.yml
 /config/ftp.yml
+/.testing_db.lock
+
