@@ -157,6 +157,13 @@ class Influencer < ApplicationRecord
     address.merge('name' => "#{first_name} #{last_name}")
   end
 
+  # The full name of the influencer
+  #
+  # @return [String]
+  def name
+    "#{first_name} #{last_name}"
+  end
+
   # Callback for updating associated orders index
   #
   # @return [Bool] true if successfully queued

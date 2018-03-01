@@ -14,7 +14,6 @@ class DebugError < StandardError; end
 
 class App < Sinatra::Base
   register Sinatra::ActiveRecordExtension
-  register Sinatra::BasicAuth
 
   include ViewHelper
   include Logging
@@ -29,7 +28,7 @@ class App < Sinatra::Base
 
     enable :method_override
     # set the views directory to /app/views
-    set :views, File.join(App.root, 'app', 'views')
+    set :views, APP_ROOT.join('app', 'views').to_path
     set :public_folder, APP_ROOT.join('app', 'static').to_path
     #use PryRescue::Rack
   end
@@ -90,12 +89,29 @@ class App < Sinatra::Base
   # @return 200 text/html
   get '/admin/influencers' do
     @title = 'Influencers'
-    influencer_params = model_params Influencer
-    @influencers = if influencer_params.empty?
-                     Influencer.all.order(:last_name) 
-                   else
-                     Influencer.where(influencer_params).order(:last_name)
-                   end
+    page = params['page'] || 1
+    limit = params['limit'] || 50
+    order = params['order'] || 'last_name'
+    filter = params['filter'] || ''
+    influencers =
+      if filter.empty?
+        Influencer.all.order(order)
+      else
+        fields = [
+          'first_name',
+          'last_name',
+          'id',
+          'address1',
+          'address2',
+          'city',
+          'state',
+          'zip',
+          'email',
+          'phone',
+        ]
+        Influencer.search(filter, fields: fields, order: order).results
+      end
+    @pagination = Paginate.new(influencers, page: page, limit: limit)
     erb :'influencers/index'
   end
 
@@ -110,7 +126,11 @@ class App < Sinatra::Base
   end
 
   # TODO cleanup
-  post '/admin/influencers' do
+  # Perform an action on a batch of influencers
+  #
+  # @param ids [Array<Integer>] the influencer ids to perform the action on
+  # @param action [String] the action to perform
+  post '/admin/influencers/action' do
     case params[:action]
     when 'create_orders'
       #raise DebugError
@@ -132,6 +152,31 @@ class App < Sinatra::Base
     end
   end
 
+  # download a csv with influencer information, matches upload format
+  #
+  # @return 200 application/octet-stream csv of the influencers currently in
+  #   the database
+  get '/admin/influencers/download' do
+    file_to_download = Influencer.to_csv
+    send_file(file_to_download, :filename => file_to_download)
+  end
+
+  # Create a new influencer
+  post '/admin/influencers' do
+    influencer = Influencer.new(model_params(Influencer))
+    if influencer.valid?
+      influencer.save!
+      notifications << Notification.new('Successfully created influencer', type: 'success', header: 'Success')
+      redirect "/admin/influencers/#{influencer.id}"
+    else
+      @title = 'Add New Influencer'
+      @method = 'post'
+      @influencer = influencer
+      notifications << Notification.new(influencer.errors.full_messages.join('<br>'), type: 'error', header: 'Error creating influencer')
+      erb :'influencer/form'
+    end
+  end
+
   # Form confirming the deletion of all influencers
   #
   # @return 200 text/html
@@ -142,7 +187,7 @@ class App < Sinatra::Base
 
   # Delete all influencers
   #
-  # @return 200
+  # @return 3xx
   delete '/admin/influencers' do
     Influencer.destroy_all
     redirect '/'
@@ -159,13 +204,32 @@ class App < Sinatra::Base
     erb :'influencers/form'
   end
 
-  # download a csv with influencer information, matches upload format
+  # Update an influencer
   #
-  # @return 200 application/octet-stream csv of the influencers currently in
-  # the database
-  get '/admin/influencers/download' do
-    file_to_download = Influencer.to_csv
-    send_file(file_to_download, :filename => file_to_download)
+  # @param id [Integer] the id of the influencer to update
+  put '/admin/influencers/:id' do |id|
+    influencer = Influencer.find(id)
+    if influencer.update(model_params(Influencer))
+      notifications << Notification.new("#{influencer.name} successfully updated!", type: 'success', header: 'Success')
+      redirect "/admin/influencers/#{influencer.id}"
+    else
+      notifications << Notification.new(influencer.errors.full_messages.join('<br>'), type: 'error', header: 'Error updating influencer')
+      @title = 'Edit Influencer'
+      @method = 'put'
+      @influencer = influencer
+      erb :'influencers/form'
+    end
+  end
+
+  delete '/admin/influencers/:id' do |id|
+    influencer = Influencer.find(id).delete
+    if influencer.persisted?
+      notifications << Notification.new("Error deleting influencer", type: 'error')
+      redirect "/admin/influencers/#{influencer.id}"
+    else
+      notifications << Notification.new("Deleted influencer", type: 'success')
+      redirect '/admin/influencers'
+    end
   end
 
   # ORDERS
@@ -251,12 +315,14 @@ class App < Sinatra::Base
           formatted_line_items: simple_format(line_items.pluck(:line_item).pluck('item_name').join("\n")),
           influencer: influencer,
           influencer_name: "#{influencer.first_name} #{influencer.last_name}",
+          influencer_id: influencer.id,
           uploaded_at: fline.uploaded_at,
           shipment_method_requested: fline.shipment_method_requested,
           tracking: tracking,
           tracking_number: tracking.try(:tracking_number),
           carrier: tracking.try(:carrier),
           tracking_created: tracking.created_at.try(:iso8601),
+          email_sent_at: tracking.email_sent_at.try(:iso8601),
         )
       end
       erb :'orders/index'

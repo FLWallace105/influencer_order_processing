@@ -1,14 +1,81 @@
-<h1 class="subtitle">What would you like to do?</h1>
-<p><a href="/admin/uploads/new">Upload influencer CSV</a></p>
-<p><a href="/admin/orders/new">Create new orders for all influencers</a></p>
-<p><a href="/admin/orders">View and edit orders and tracking</a></p>
-<p><a href="/admin/influencers">View Influencers</a></p>
-<p><a href="/admin/influencers/download">Download influencer CSV</a></p>
-<p><a href="/admin/influencers/delete">Reset all influencers</a></p>
-<p><a href="/admin/orders/delete">Reset order history</a></p>
-
-<form class="is-pulled-right" action="/admin/orders/upload" method="post">
-  <div class="field">
-    <input class="button is-warning" type="submit" name="action" value="Send orders to Warehouse">
+<div class="container">
+  <div class="tile is-ancestor influencers">
+    <div class="tile is-parent">
+      <div class="tile is-child">
+        <h1 class="title">Influencers</h1>
+        <div class="tile is-ancestor">
+          <div class="tile is-vertical">
+            <div class="tile is-parent">
+              <div class="tile is-child box hero is-primary">
+                <a href="/admin/uploads/new">
+                  <h2 class="title">Upload CSV</h2>
+                  <p>Upload an influencer CSV to add or change influencers in bulk.</p>
+                </a>
+              </div>
+            </div>
+            <div class="tile">
+              <div class="tile is-parent">
+                <div class="tile is-child box hero is-info">
+                  <a href="/admin/influencers/download">
+                    <h2 class="title">Download CSV</h2>
+                    <p>Download a CSV of all current influencers. Format is the same as the uploaded CSV. Can be used as a template for updating influencers.</p>
+                  </a>
+                </div>
+              </div>
+              <div class="tile is-parent">
+                <div class="tile is-child box hero is-info">
+                  <a href="/admin/influencers">
+                    <h2 class="title">View Influencers</h2>
+                    <p>Browse and search through all influencers.</p>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tile is-parent">
+      <div class="tile is-child">
+        <h1 class="title">Orders</h1>
+        <div class="tile is-ancestor">
+          <div class="tile orders is-parent is-vertical">
+            <div class="tile is-child box hero is-info">
+              <a href="/admin/orders">
+                <h2 class="title">View Orders</h2>
+                <p>View and search through existing orders.</p>
+              </a>
+            </div>
+            <div class="tile is-child box hero is-warning">
+              <a href="/admin/orders/upload?action=go&_method=post">
+                <h2 class="title">Upload New Orders</h2>
+                <p>Force upload of any new orders to the warehouse now.</p>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tile is-parent">
+      <div class="tile is-child">
+        <h1 class="title">Danger Zone</h1>
+        <div class="tile is-ancestor">
+          <div class="tile is-parent danger-zone is-vertical">
+            <div class="tile box is-child is-danger hero">
+              <a href="/admin/orders/delete">
+                <h2 class="title">Delete Orders</h2>
+                <p>Delete all existing order history.</p>
+              </a>
+            </div>
+            <div class="tile is-danger box hero">
+              <a href="/admin/influencers/delete">
+                <h2 class="title">Delete Influencers</h2>
+                <p>Delete all existing influencer data.</p>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-</form>
+</div>

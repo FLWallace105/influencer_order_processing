@@ -41,9 +41,9 @@
       </div>
     </div>
   </section>
-  <section class="main">
-    <div class="container">
-      <div class="notifications">
+  <% unless notifications.empty? %>
+    <section class="section">
+      <div class="container notifications">
         <% render_and_clear_notifications.each do |n| %>
           <div class="notification is-<%= n.type %>">
             <button class="delete" onclick="removeParent(event)"></button>
@@ -54,8 +54,10 @@
           </div>
         <% end %>
       </div>
-      <%= yield %>
-    </div>
+    </section>
+  <% end %>
+  <section class="section main">
+    <%= yield %>
   </section>
 </body>
 </html>

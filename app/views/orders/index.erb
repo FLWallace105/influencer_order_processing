@@ -1,12 +1,20 @@
-<div class="level">
-  <div class="level-item">
-    <form method="get">
-      <label for="filter">Search</label>
-      <input id="filter" type="text" name="filter" value="<%= @filter %>">
-    </form>
-  </div>
-  <div class="level-item">
-    <%= erb :pager, locals: {current_page: @pagination.page, last_page: @pagination.count}%>
+<div class="container">
+  <div class="level">
+    <div class="level-item">
+      <form method="get">
+        <div class="field has-addons">
+          <div class="control">
+            <input class="input" id="filter" type="text" name="filter" value="<%= @filter %>">
+          </div>
+          <div class="control">
+            <input class="input button is-info" type="submit" value="Search">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="level-item">
+      <%= erb :pager, locals: {current_page: @pagination.page, last_page: @pagination.count}%>
+    </div>
   </div>
 </div>
 <table class="table">
@@ -20,6 +28,7 @@
     <th>Tracking Service</th>
     <th>Tracking Number</th>
     <th>Tracking Created</th>
+    <th>Emailed At</th>
   </thead>
   <tbody>
     <% @table.each do |line| %>
@@ -29,10 +38,11 @@
         <td><%= line.formatted_billing_address %></td>
         <td><%= line.formatted_shipping_address %></td>
         <td><%= line.formatted_line_items %></td>
-        <td><%= line.influencer_name %></td>
+        <td><a href="/admin/influencers/<%= line.influencer_id %>"><%= line.influencer_name %></a></td>
         <td><%= line.carrier %></td>
         <td><%= line.tracking_number %></td>
         <td><%= line.tracking_created %></td>
+        <td><%= line.email_sent_at %></td>
       </tr>
     <% end %>
   </tbody>

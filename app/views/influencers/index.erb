@@ -8,6 +8,25 @@
     overflow: scroll;
   }
 </style>
+<div class="level">
+  <div class="level-left">
+    <form method="get" accept-charset="utf-8">
+      <div class="field has-addons">
+        <div class="control">
+          <input class="input" type="search" value="<%= params['filter'] %>" name="filter">
+        </div>
+        <span class="control">
+          <input class="button is-info" type="submit" value="Search" name="action">
+        </span>
+      </div>
+    </form>
+  </div>
+  <div class="level-right">
+    <div class="level-item">
+      <%= erb :pager, locals: {current_page: @pagination.page, last_page: @pagination.count} %>
+    </div>
+  </div>
+</div>
 <form method="post" accept-charset="utf-8">
   <a href="influencers/new" class="button is-link is-primary">New</a>
   <div class="field is-pulled-right has-addons">
@@ -42,10 +61,10 @@
       </tr>
     </thead>
     <tbody>
-      <% @influencers.each do |influencer| %>
+      <% @pagination.results.each do |influencer| %>
         <tr>
           <td><input type="checkbox" name="ids[]" value="<%= influencer.id %>" id="ids[]"></td>
-          <td><%= influencer.id %></td>
+          <td><a href="/admin/influencers/<%= influencer.id %>"><%= influencer.id %></a></td>
           <td><%= influencer.first_name %></td>
           <td><%= influencer.last_name %></td>
           <td><%= influencer.address1 %></td>
