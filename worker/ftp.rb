@@ -7,18 +7,18 @@ class EllieFtp < Net::FTP
   include Async
   include Logging
 
-  @user = nil
+  @username = nil
   @password = nil
   @host = nil
   @debug = false
 
   class << self
-    attr_accessor :debug, :host, :user, :password
+    attr_accessor :debug, :host, :username, :password
   end
 
   def self.upload_orders_csv(file, options = {})
     directory = options[:directory] || '/EllieInfluencer/ReceiveOrder'
-    ftp = new(self.host, username: self.user, password: self.password, debug_mode: debug)
+    ftp = new(self.host, username: self.username, password: self.password, debug_mode: debug)
     logger.info "Starting orders csv upload of #{file} to #{directory} on #{self.host}"
     ftp.chdir directory
     ftp.put(File.open file)
@@ -28,13 +28,20 @@ class EllieFtp < Net::FTP
 
   def self.poll_order_tracking(directory = '/EllieInfluencer/SendOrder')
     logger.info "Polling tracking FTP server: #{directory}"
-    ftp = new(self.host, username: self.user, password: self.password, debug_mode: self.debug)
+    ftp = new(self.host, username: self.username, password: self.password, debug_mode: self.debug)
     ftp.chdir directory
     dir = ftp.mlsd
     dir.select{|entry| entry.type == 'file' && /^ORDERTRK/ =~ entry.pathname}.each do |entry|
       logger.debug "Found #{entry.pathname}"
       ftp.process_tracking_csv entry.pathname
     end
+  end
+
+  def initialize(host=nil, options={})
+    options[:username] ||= self.class.username
+    options[:password] ||= self.class.password
+    options[:debug_mode] ||= self.class.debug
+    super(host || self.class.host, options)
   end
 
   def process_tracking_csv(path)

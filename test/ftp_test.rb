@@ -2,26 +2,32 @@ require_relative 'test_helper'
 require './worker/ftp'
 
 class FtpTest < Minitest::Test
+  include Minitest::Hooks
+
+  @ftp = nil
+
+  class << self
+    attr_accessor :ftp
+  end
 
   def before_all
-
+    EllieFtp.debug = true
+    ftp = EllieFtp.new
+  rescue Exception => e
+    STDERR.puts "host: #{EllieFtp.host}"
+    STDERR.puts "username: #{EllieFtp.username}"
+    STDERR.puts "password: #{EllieFtp.password}"
+    STDERR.puts e.backtrace
+    STDERR.puts e.message
+    raise e
   end
 
-  def test_poll_order_tracking_when_empty
+  #def after_all
+    #ftp.quit
+  #end
+
+  def test_this_works
+    assert true
   end
 
-  def test_poll_order_tracking
-  end
-
-  def test_upload_orders
-  end
-
-  def test_empty_upload_orders
-  end
-
-  def test_process_tracking_csv
-  end
-
-  def test_can_be_run_async
-  end
 end

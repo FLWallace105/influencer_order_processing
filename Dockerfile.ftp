@@ -10,7 +10,7 @@ VOLUME /home
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["/ftp-entrypoint.sh"]
 
-ARG FTP_USER=fambrands
+ARG FTP_USER=ftp_user
 ARG FTP_PASS=sportswear
 
 RUN apk update && \
