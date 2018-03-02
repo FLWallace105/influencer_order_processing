@@ -32,7 +32,7 @@
       <div class="container">
         <a href="/">
           <h1 class="title is-bold">
-            <%= @title || 'Create Your Monthly Order' %>
+            <%= @title || 'Manage Influencer Orders' %>
           </h1>
         </a>
         <% if @subtitle %>
@@ -46,7 +46,7 @@
       <div class="container notifications">
         <% render_and_clear_notifications.each do |n| %>
           <div class="notification is-<%= n.type %>">
-            <button class="delete" onclick="removeParent(event)"></button>
+            <button class="button delete" onclick="removeParent(event)"></button>
             <% if n.header %>
               <h5 class="title"><%= n.header %></h2>
             <% end %>

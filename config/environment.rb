@@ -59,6 +59,5 @@ autoload_path APP_ROOT.join('lib', 'models', '*.rb')
 require APP_ROOT.join('worker', 'ftp')
 ftp_config = load_yml(APP_ROOT.join('config', 'ftp.yml'))[ENVIRONMENT.to_s]
 EllieFtp.host = ftp_config['host']
-EllieFtp.user = ftp_config['user']
+EllieFtp.username = ftp_config['user']
 EllieFtp.password = ftp_config['password']
-

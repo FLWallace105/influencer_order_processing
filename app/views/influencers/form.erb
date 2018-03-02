@@ -81,7 +81,15 @@
           </select>
         </div>
       </div> <!-- /.field -->
-      <input class="button is-success" type="submit" value="Submit" name="submit">
     </div><!-- /.column -->
   </div><!-- /.columns -->
+  <input class="button is-success" type="submit" value="Submit" name="submit">
 </form>
+<% if @influencer.id %>
+  <span>
+    <form action="/admin/influencers/<%= @influencer.id %>" method="post">
+      <input type="hidden" name="_method" value="delete">
+      <button class="button is-danger" onclick="confirm('Are you sure you want to delete this influencer?')">Delete</button>
+    </form>
+  </span>
+<% end %>

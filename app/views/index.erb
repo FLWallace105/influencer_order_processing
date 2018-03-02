@@ -61,6 +61,33 @@
         <h1 class="title">Danger Zone</h1>
         <div class="tile is-ancestor">
           <div class="tile is-parent danger-zone is-vertical">
+            <div class="tile is-child box">
+              <h2 class="title">Refresh Shopify Data</h2>
+              <p>
+              Force a update of all shopify data immediately. This is useful for
+              refreshing information from shopify after changes have been made
+              to products or collections. Unless you know what you are doing you
+              will always want to refresh everything.
+              </p>
+              <form action="/admin/refresh_cache" method="post">
+                <div class="field has-addons">
+                  <div class="control is-expanded">
+                    <div class="select is-fullwidth is-warning">
+                      <select id="cache-select" name="cache">
+                        <option value="all">Everything</option>
+                        <option value="custom_collections">Collections</option>
+                        <option value="collects">Collects</option>
+                        <option value="products">Products</option>
+                        <option value="orders">Orders</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <button class="button is-warning">Refresh Data</button>
+                  </div>
+                </div>
+              </form>
+            </div>
             <div class="tile box is-child is-danger hero">
               <a href="/admin/orders/delete">
                 <h2 class="title">Delete Orders</h2>

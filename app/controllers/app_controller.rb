@@ -47,6 +47,7 @@ class App < Sinatra::Base
   #
   # @return 200 text/html
   get '/admin/uploads/new' do
+    @title = 'Upload CSV'
     erb :'uploads/new'
   end
 
@@ -181,7 +182,7 @@ class App < Sinatra::Base
   #
   # @return 200 text/html
   get '/admin/influencers/delete' do
-    @title = 'Reset All Influencers'
+    @title = 'Delete All Influencers'
     erb :'influencers/delete'
   end
 
@@ -222,7 +223,7 @@ class App < Sinatra::Base
   end
 
   delete '/admin/influencers/:id' do |id|
-    influencer = Influencer.find(id).delete
+    influencer = Influencer.find(id).destroy
     if influencer.persisted?
       notifications << Notification.new("Error deleting influencer", type: 'error')
       redirect "/admin/influencers/#{influencer.id}"
@@ -436,21 +437,21 @@ class App < Sinatra::Base
   post '/admin/refresh_cache' do
     case params['cache']
     when 'all'
-      success = ShopifyCache.async :pull_all
+      success = Resque.enqueue_to :default, :ShopifyCache, :pull_all
     when 'products'
-      success = ShopifyCache.async :pull_products
+      success = Resque.enqueue_to :default, :ShopifyCache, :pull_products
     when 'orders'
-      success = ShopifyCache.async :pull_orders
+      success = Resque.enqueue_to :default, :ShopifyCache, :pull_orders
     when 'collects'
-      success = ShopifyCache.async :pull_collects
+      success = Resque.enqueue_to :default, :ShopifyCache, :pull_collects
     when 'custom_collections'
-      success = ShopifyCache.async :pull_custom_collections
+      success = Resque.enqueue_to :default, :ShopifyCache, :pull_custom_collections
     else
       return 404
     end
     if success
       notifications << Notification.new(
-        'Cache refreshed!',
+        'Cache refresh started!',
         type: 'success', header: 'Success'
       )
     else
